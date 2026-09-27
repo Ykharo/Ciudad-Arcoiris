@@ -93,8 +93,17 @@
   #petPanel .phead{background:var(--mint);}
   .phead h2{margin:0;font:800 30px/1 var(--display);letter-spacing:.01em;text-wrap:balance;text-shadow:0 2px 0 rgba(0,0,0,.12);padding-top:4px;}
   .phead .toy{font-size:17px;padding:10px 18px 8px;}
-  #tabs{display:flex;gap:8px;padding:14px 16px 10px;overflow-x:auto;flex:none;touch-action:pan-x;scrollbar-width:none;}
-  #tabs::-webkit-scrollbar{display:none;}
+  .tabs{display:flex;gap:8px;padding:14px 16px 10px;overflow-x:auto;flex:none;touch-action:pan-x;scrollbar-width:none;}
+  .tabs::-webkit-scrollbar{display:none;}
+  #shopPanel .phead{background:var(--sky);}
+  #shopPanel .opt.on{border-color:var(--sky);background:#EAF6FF;box-shadow:0 3px 0 #A9DBFB;}
+  .opts.nums{grid-template-columns:repeat(auto-fill,minmax(54px,1fr));}
+  .opts.nums .opt{min-height:52px;font:800 21px/1 var(--display);}
+  .cdot{flex:none;width:28px;height:28px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px #D9D3E6;}
+  .garage .mypet{flex-wrap:wrap;row-gap:8px;}
+  .mypet.on{border-color:var(--sky);background:#EAF6FF;}
+  .toy.wide{width:100%;margin-top:14px;}
+  .pbody p.note.editing{background:#EAF6FF;border-radius:14px;padding:10px 12px;color:var(--ink);margin-top:12px;}
   .tab{flex:none;border:0;background:#F4EEF6;color:var(--ink);font:800 17px/1 var(--display);padding:11px 16px 9px;border-radius:999px;}
   .tab.on{background:var(--ink);color:#fff;}
   .pbody{flex:1;overflow-y:auto;padding:4px 18px 18px;touch-action:pan-y;-webkit-overflow-scrolling:touch;}
@@ -173,6 +182,7 @@
         <div id="menuBtns">
           <button id="btnCloset" class="toy pink"><span class="em">👗</span>Vestidor</button>
           <button id="btnPets" class="toy mint"><span class="em">🐾</span>Mascotas</button>
+          <button id="btnMyCar" class="toy coral"><span class="em">🚗</span>Mi auto</button>
           <button id="btnWave" class="toy"><span class="em">👋</span>Saludar</button>
         </div>
         <button id="btnJump" class="toy sky"><span class="em">⬆</span>Saltar</button>
@@ -190,7 +200,7 @@
 
   <aside id="closet" class="panel" hidden>
     <div class="phead"><h2>Vestidor</h2><button id="closetDone" class="toy">Listo</button></div>
-    <div id="tabs"></div>
+    <div id="tabs" class="tabs"></div>
     <div id="closetBody" class="pbody"></div>
     <div class="pfoot">
       <button id="btnRandom" class="toy sun"><span class="em">✨</span>Sorpréndeme</button>
@@ -205,10 +215,20 @@
     </div>
   </aside>
 
+  <aside id="shopPanel" class="panel" hidden>
+    <div class="phead"><h2>Autos Arcoíris</h2><button id="shopDone" class="toy">Salir</button></div>
+    <div id="shopTabs" class="tabs"></div>
+    <div id="shopBody" class="pbody"></div>
+    <div class="pfoot">
+      <button id="btnCarRandom" class="toy sun"><span class="em">✨</span>Sorpréndeme</button>
+      <button id="btnBuy" class="toy sky"><span class="em">🔑</span>¡Lo quiero!</button>
+    </div>
+  </aside>
+
   <div id="start">
     <div class="card">
       <h1>Ciudad Arcoíris</h1>
-      <p class="sub">Pasea por la ciudad, cámbiate de ropa en el vestidor y adopta mascotas que te acompañen.</p>
+      <p class="sub">Pasea por la ciudad, cámbiate de ropa, adopta mascotas y diseña tu propio auto.</p>
       <button id="btnPlay" class="toy pink" disabled>Construyendo la ciudad…</button>
       <ul class="how">
         <li><b>🕹</b>Círculo: caminar</li>
@@ -779,41 +799,7 @@ function park(cx, cz) {
   [[-12, -12], [12, -12], [-12, 12], [12, 12], [-12.5, -6], [-6, -12.5], [13, 5]].forEach(([a, b], i) => tree(cx + a, cz + b, 1 + (i % 3) * 0.12, i % 3 === 0 ? 1 : 0));
 }
 
-const cars = [];
-function car(x, z, ry, color) {
-  const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry; g.userData.dynamic = true;
-  const bodyM = mat(color, { roughness: 0.35 });
-  const shell = new THREE.Group(); g.add(shell);
-  shell.add(mesh(rlo(2.2, 0.9, 4.2, 0.4), bodyM, 0, 0.75, 0));
-  shell.add(mesh(rlo(1.9, 0.85, 2.2, 0.35), mat('#CFEFFF', { roughness: 0.15 }), 0, 1.5, -0.2));
-  shell.add(mesh(rlo(2.0, 0.14, 2.3, 0.07), bodyM, 0, 1.95, -0.2));
-  shell.add(mesh(rlo(1.7, 0.1, 0.5, 0.05), mat('#FFFFFF', { roughness: 0.4 }), 0, 1.22, 2.02));
-  [-1, 1].forEach(s => {
-    shell.add(mesh(sph(0.18, 10, 8), mat('#FFF6C9', { emissive: '#FFE58A', emissiveIntensity: 0.4 }), s * 0.7, 0.85, 2.08));
-    shell.add(mesh(sph(0.15, 10, 8), mat('#FF4F5E'), s * 0.75, 0.85, -2.08));
-  });
-  mergeChildren(shell);
-  const wheels = [];
-  [[-1, -1], [-1, 1], [1, -1], [1, 1]].forEach(([a, b]) => {
-    const pivot = new THREE.Group(); pivot.position.set(a * 1.02, 0.42, b * 1.3);
-    const spin = new THREE.Group(); pivot.add(spin);
-    const t = mesh(cyl(0.42, 0.42, 0.34, 16), mat('#2B2F45'), 0, 0, 0); t.rotation.z = Math.PI / 2; spin.add(t);
-    const hub = mesh(cyl(0.18, 0.18, 0.36, 10), mat('#E6E6F0'), 0, 0, 0); hub.rotation.z = Math.PI / 2; spin.add(hub);
-    spin.add(mesh(box(0.37, 0.08, 0.52), mat('#E6E6F0'), 0, 0, 0));
-    g.add(pivot); wheels.push({ pivot, spin, front: b > 0 });
-  });
-  world.add(g);
-  const obs = { x, z, hw: 1.2, hd: 2.15, h: 0 };
-  obstacles.push(obs);
-  const c = { g, shell, wheels, x, z, heading: ry, speed: 0, steer: 0, obs, bump: 0 };
-  c.zone = { id: 'car', car: c, label: '🚗 Subirse al auto' };
-  cars.push(c); syncCar(c);
-}
-function syncCar(c) {
-  const sh = Math.abs(Math.sin(c.heading)), ch = Math.abs(Math.cos(c.heading));
-  c.obs.x = c.x; c.obs.z = c.z; c.obs.hw = sh * 2.15 + ch * 1.15; c.obs.hd = ch * 2.15 + sh * 1.15;
-  c.g.position.set(c.x, 0, c.z); c.g.rotation.y = c.heading;
-}
+const cars = [];   // drivable cars in the street (see CARS section)
 
 /* ---------- city layout ---------- */
 const HOUSE_STYLES = [
@@ -832,12 +818,14 @@ function buildCity() {
   const mine = house(-13, 26, Math.PI / 2, { w: 9, d: 7.5, h: 6, wall: '#FFD6E2', roof: '#FF6FAE', door: '#9B6BF0', path: 3.3 });
   const s = makeSign('Mi Casa', '#9B6BF0', '#FFFFFF', 3.4); s.position.set(0, 5.1, 7.5 / 2 + 0.07); mine.add(s);
   flowers(-7.5, 20, 2, 4, 14, 41); flowers(-7.5, 32, 2, 4, 14, 42);
+  carShop();
 
   // houses in the outer blocks, each facing the nearest street
   const outer = [-57.75, -20, 20, 57.75];
   let k = 0;
   outer.forEach(bx => outer.forEach(bz => {
     if (Math.abs(bx) < 30 && Math.abs(bz) < 30) return;
+    if (bx > 50 && bz === -20) { k++; return; } // this block is the car dealership
     let best = null;
     LINES.forEach(L => {
       const dx = Math.abs(bx - L), dz = Math.abs(bz - L);
@@ -860,7 +848,7 @@ function buildCity() {
 
   // trees scattered in the outer blocks and a green belt around the city
   const r = seeded(99);
-  const clearOf = (x, z, m) => !obstacles.some(o => Math.abs(x - o.x) < o.hw + m && Math.abs(z - o.z) < o.hd + m) && !LINES.some(L => Math.abs(x - L) < 7 || Math.abs(z - L) < 7);
+  const clearOf = (x, z, m) => !obstacles.some(o => Math.abs(x - o.x) < o.hw + m && Math.abs(z - o.z) < o.hd + m) && !LINES.some(L => Math.abs(x - L) < 7 || Math.abs(z - L) < 7) && !(x > 43 && x < 78 && z > -37 && z < -3);
   let placed = 0, tries = 0;
   while (placed < 26 && tries < 800) {
     tries++;
@@ -876,9 +864,15 @@ function buildCity() {
   }
   // trees along inner blocks
   [[8, -32], [32, -32], [8, 32], [32, 32], [-32, 32], [-8, 8.5], [32, 8.5]].forEach(([x, z], i) => tree(x, z, 0.9, i % 2));
-  // parked cars
-  car(2.1, 22, 0, '#FF6FAE'); car(-2.1, -24, Math.PI, '#4FB6F5'); car(28, -2.1, Math.PI / 2, '#FFD23F');
-  car(-52, 2.1, -Math.PI / 2, '#3DD6A8'); car(20, 42.1, Math.PI / 2, '#A77BF3'); car(42.1, -22, 0, '#FF7A59');
+  // parked cars anyone can drive
+  const P = Math.PI;
+  spawnCar({ type: 'clasico', color: '#FF6FAE', accent: '#FFFFFF', deco: 'corazones', extras: ['pestanas', 'sonrisa'] }, 2.1, 22, 0);
+  spawnCar({ type: 'jeep', color: '#4FB6F5', accent: '#FFD23F', rims: 'deportiva' }, -2.1, -24, P);
+  spawnCar({ type: 'descapotable', color: '#FFD23F', accent: '#FF6FAE', deco: 'rayas' }, 28, -2.1, P / 2);
+  spawnCar({ type: 'camioneta', color: '#34CFA0', accent: '#FFFFFF', horn: 'tren' }, -52, 2.1, -P / 2);
+  spawnCar({ type: 'clasico', color: '#A77BF3', accent: '#FFD23F', deco: 'estrellas', topper: 'antena', rims: 'dorada' }, 20, 42.1, P / 2);
+  spawnCar({ type: 'deportivo', color: '#FF4F5E', accent: '#FFFFFF', deco: 'numero', num: 7, rims: 'deportiva' }, 42.1, -22, 0);
+  spawnCar({ type: 'karting', color: '#FF9B4A', accent: '#2E3350', deco: 'llamas', horn: 'payaso' }, -24, -2.1, P / 2);
 
   mergeStatic(world);
 }
@@ -1677,11 +1671,615 @@ function addPaint(head, paint) {
   }
 }
 
+/* ================= CARS: models, paint, wheels, decorations ================= */
+const CAR_COLORS = ['#FF6FAE', '#FF4F5E', '#FF9B4A', '#FFD23F', '#7BD85A', '#34CFA0', '#8FE3C5', '#4FB6F5', '#5B6CF0', '#A77BF3', '#C9A0E8', '#F7B7D2', '#FFFFFF', '#2E3350'];
+const GLASS_M = new THREE.MeshStandardMaterial({ color: 0xD6F1FF, roughness: 0.05, metalness: 0.1, transparent: true, opacity: 0.28, depthWrite: false, side: THREE.DoubleSide });
+const _UP = new THREE.Vector3(0, 1, 0), _tv = new THREE.Vector3();
+function tube(parent, a, b, r, m) {
+  const dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2], len = Math.round(Math.hypot(dx, dy, dz) * 1000) / 1000;
+  const o = mesh(cyl(r, r, len, 10), m, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2);
+  o.quaternion.setFromUnitVectors(_UP, _tv.set(dx, dy, dz).normalize());
+  parent.add(o); return o;
+}
+const unitPlane = () => G('unitPlane', () => new THREE.PlaneGeometry(1, 1));
+
+/* shared parts kit handed to each model builder; +z is the front of the car */
+function carKit(spec) {
+  const shell = new THREE.Group();
+  const K = {
+    shell, spec,
+    body: mat(spec.color, { roughness: 0.3 }), body2: mat(shade(spec.color, 0.8), { roughness: 0.4 }),
+    acc: mat(spec.accent, { roughness: 0.4 }), trim: mat('#3C4670', { roughness: 0.5 }), white: mat('#FFFFFF', { roughness: 0.4 }),
+    chrome: mat('#E6E9F2', { roughness: 0.22, metalness: 0.55 }), inner: mat(shade(spec.color, 0.62), { roughness: 0.85 }),
+    wood: mat('#C98B4F', { roughness: 0.9 }), ink: mat('#2A2438', { roughness: 0.4 }),
+    glint: mat('#FFFFFF', { emissive: '#FFFFFF', emissiveIntensity: 0.6 }),
+    A(geo, m, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0) { const o = mesh(geo, m, x, y, z); o.rotation.set(rx, ry, rz); shell.add(o); return o; },
+    glass(w, h, x, y, z, rx = 0) { const o = mesh(box(w, h, 0.04), GLASS_M, x, y, z, false, false); o.rotation.x = rx; shell.add(o); return o; },
+    tube(a, b, r, m) { return tube(shell, a, b, r, m); },
+    seat(x, sy, z, w = 0.98) {
+      K.A(rbox(w, 0.26, 0.92, 0.1), K.acc, x, sy - 0.13, z + 0.02);
+      K.A(rbox(w, 1.0, 0.24, 0.11), K.acc, x, sy + 0.42, z - 0.5, -0.12);
+      K.A(rbox(w * 0.6, 0.3, 0.2, 0.09), K.acc, x, sy + 1.02, z - 0.57, -0.12);
+    }
+  };
+  return K;
+}
+
+/* Each builder returns the layout: seat height (sy), seat/passenger spots, wheels [x,z,r,width],
+   lights [x,y,z,r,sx,sy], a flat side area for designs, tops for racing stripes and anchors for toppers. */
+function carClasico(K) {
+  const { A, body, acc, trim, chrome } = K, sy = 0.95, sz = -0.45;
+  A(rbox(2.9, 1.05, 5.0, 0.32), body, 0, 0.98, 0);
+  A(rbox(2.5, 0.05, 2.5, 0.03), K.inner, 0, 1.5, -0.6);
+  [-1, 1].forEach(s => { A(rbox(0.2, 1.55, 0.24, 0.08), body, s * 1.27, 2.2, 0.72, -0.2); A(rbox(0.2, 1.5, 0.26, 0.08), body, s * 1.27, 2.2, -1.95, 0.1); });
+  A(rbox(2.9, 0.26, 3.2, 0.13), acc, 0, 3.06, -0.62);
+  K.glass(2.36, 1.4, 0, 2.2, 0.76, -0.2);
+  A(rbox(2.5, 0.34, 0.5, 0.14), trim, 0, 1.62, 0.55);
+  A(rbox(2.6, 0.3, 0.34, 0.14), chrome, 0, 0.6, 2.5); A(rbox(2.6, 0.3, 0.34, 0.14), chrome, 0, 0.6, -2.5);
+  K.seat(0.6, sy, sz); K.seat(-0.6, sy, sz);
+  const w = [0.6, 0.5];
+  return { sy, seat: { x: 0.6, z: sz }, passenger: { x: -0.6, z: sz },
+    wheels: [[1.3, 1.62, ...w], [-1.3, 1.62, ...w], [1.3, -1.62, ...w], [-1.3, -1.62, ...w]],
+    lightsF: [[0.85, 1.12, 2.47, 0.21], [-0.85, 1.12, 2.47, 0.21]], lightsB: [[0.95, 1.18, -2.48, 0.16], [-0.95, 1.18, -2.48, 0.16]],
+    side: { x: 1.45, y: 0.98, z0: -1.0, z1: 0.95, h: 0.46 },
+    tops: [{ y: 1.505, z: 1.55, len: 1.3 }, { y: 3.19, z: -0.62, len: 2.7 }],
+    roof: { y: 3.19, z: -0.4 }, nose: { y: 1.5, z: 2.0 }, face: { y: 1.02, z: 2.5, r: 0.3 },
+    hw: 1.55, hl: 2.6, camY: 2.1 };
+}
+function carDescapotable(K) {
+  const { A, body, trim, chrome } = K, sy = 0.8, sz = -0.55;
+  A(rbox(2.9, 0.85, 5.4, 0.3), body, 0, 0.85, 0);
+  A(rbox(1.5, 0.14, 1.7, 0.07), body, 0, 1.3, 1.55);
+  A(rbox(2.5, 0.05, 2.1, 0.03), K.inner, 0, 1.27, -0.55);
+  K.glass(2.4, 0.72, 0, 1.6, 0.62, -0.5);
+  A(rbox(2.5, 0.08, 0.08, 0.04), chrome, 0, 1.93, 0.45);
+  [-1, 1].forEach(s => A(rbox(0.07, 0.75, 0.07, 0.03), chrome, s * 1.24, 1.6, 0.62, -0.5));
+  A(rbox(2.5, 0.28, 0.4, 0.12), trim, 0, 1.36, 0.55);
+  A(rbox(2.5, 0.34, 0.75, 0.16), trim, 0, 1.36, -1.75);   // folded soft top
+  A(rbox(2.7, 0.28, 0.32, 0.13), chrome, 0, 0.55, 2.72); A(rbox(2.7, 0.28, 0.32, 0.13), chrome, 0, 0.55, -2.72);
+  K.seat(0.6, sy, sz); K.seat(-0.6, sy, sz);
+  const w = [0.54, 0.48];
+  return { sy, seat: { x: 0.6, z: sz }, passenger: { x: -0.6, z: sz },
+    wheels: [[1.3, 1.8, ...w], [-1.3, 1.8, ...w], [1.3, -1.8, ...w], [-1.3, -1.8, ...w]],
+    lightsF: [[0.95, 0.95, 2.68, 0.2], [-0.95, 0.95, 2.68, 0.2]], lightsB: [[1.0, 1.0, -2.69, 0.15], [-1.0, 1.0, -2.69, 0.15]],
+    side: { x: 1.45, y: 0.85, z0: -1.15, z1: 1.15, h: 0.4 },
+    tops: [{ y: 1.37, z: 1.55, len: 1.6, w: 0.22 }, { y: 1.275, z: -2.4, len: 0.45 }],
+    roof: { y: 1.97, z: 0.45 }, nose: { y: 1.3, z: 2.2 }, face: { y: 1.0, z: 2.7, r: 0.28 },
+    hw: 1.55, hl: 2.85, camY: 1.9 };
+}
+function carJeep(K) {
+  const { A, body, acc, trim, chrome } = K, sy = 1.25, sz = -0.55;
+  A(rbox(2.8, 1.0, 4.7, 0.18), body, 0, 1.45, 0);
+  A(rbox(2.4, 0.05, 2.3, 0.03), K.inner, 0, 1.95, -0.6);
+  [-1, 1].forEach(s => {
+    [1.6, -1.6].forEach(z => A(rbox(0.62, 0.16, 1.75, 0.07), trim, s * 1.45, 1.62, z));
+    A(rbox(0.45, 0.1, 1.3, 0.05), trim, s * 1.5, 1.0, 0);
+  });
+  [-1, 1].forEach(s => { K.tube([s * 1.25, 1.95, -1.3], [s * 1.25, 3.35, -1.3], 0.09, acc); K.tube([s * 1.25, 3.35, -1.3], [s * 1.2, 1.95, -2.2], 0.08, acc); });
+  K.tube([-1.25, 3.35, -1.3], [1.25, 3.35, -1.3], 0.09, acc);
+  A(rbox(2.7, 0.12, 0.14, 0.05), trim, 0, 2.9, 0.8);
+  [-1, 1].forEach(s => A(rbox(0.12, 0.95, 0.14, 0.05), trim, s * 1.3, 2.42, 0.8));
+  K.glass(2.45, 0.85, 0, 2.42, 0.8);
+  A(rbox(2.4, 0.32, 0.4, 0.12), trim, 0, 2.08, 0.55);
+  for (let i = -3; i <= 3; i++) A(rbox(0.12, 0.5, 0.06, 0.04), trim, i * 0.2, 1.55, 2.36);
+  A(rbox(3.0, 0.3, 0.36, 0.1), trim, 0, 0.8, 2.42); A(rbox(3.0, 0.3, 0.36, 0.1), trim, 0, 0.8, -2.42);
+  A(cyl(0.55, 0.55, 0.34, 20), mat('#2B2F45', { roughness: 0.85 }), 0, 1.55, -2.55, Math.PI / 2);
+  A(cyl(0.26, 0.26, 0.36, 14), chrome, 0, 1.55, -2.55, Math.PI / 2);
+  K.seat(0.6, sy, sz); K.seat(-0.6, sy, sz);
+  const w = [0.74, 0.6];
+  return { sy, seat: { x: 0.6, z: sz }, passenger: { x: -0.6, z: sz },
+    wheels: [[1.45, 1.6, ...w], [-1.45, 1.6, ...w], [1.45, -1.6, ...w], [-1.45, -1.6, ...w]],
+    lightsF: [[1.0, 1.6, 2.36, 0.24], [-1.0, 1.6, 2.36, 0.24]], lightsB: [[1.2, 1.55, -2.37, 0.15], [-1.2, 1.55, -2.37, 0.15]],
+    side: { x: 1.4, y: 1.42, z0: -0.72, z1: 0.72, h: 0.52 },
+    tops: [{ y: 1.95, z: 1.55, len: 1.3 }],
+    roof: { y: 3.44, z: -1.3 }, nose: { y: 1.95, z: 2.05 }, face: { y: 1.22, z: 2.36, r: 0.26 },
+    hw: 1.78, hl: 2.75, camY: 2.5 };
+}
+function carBuggy(K) {
+  const { A, body, acc, trim, chrome } = K, sy = 0.85, sz = -0.35;
+  A(rbox(2.0, 0.7, 3.4, 0.3), body, 0, 0.85, 0.1);
+  A(rbox(1.6, 0.45, 1.1, 0.2), body, 0, 0.95, 2.0, 0.28);
+  A(rbox(1.5, 0.05, 1.5, 0.03), K.inner, 0, 1.2, -0.3);
+  A(rbox(1.7, 0.26, 0.36, 0.12), trim, 0, 1.3, 0.55);
+  const P = [[0.85, 1.2, -0.95], [0.8, 2.95, -0.95], [0.72, 2.75, 0.5], [0.8, 1.2, 1.1], [0.55, 1.05, -2.0]];
+  [-1, 1].forEach(s => {
+    const q = P.map(([x, y, z]) => [s * x, y, z]);
+    K.tube(q[0], q[1], 0.08, acc); K.tube(q[1], q[2], 0.08, acc); K.tube(q[2], q[3], 0.08, acc); K.tube(q[1], q[4], 0.07, acc);
+  });
+  K.tube([-0.8, 2.95, -0.95], [0.8, 2.95, -0.95], 0.08, acc);
+  K.tube([-0.72, 2.75, 0.5], [0.72, 2.75, 0.5], 0.08, acc);
+  A(rbox(1.3, 0.6, 0.8, 0.14), trim, 0, 1.0, -1.95);
+  [-1, 1].forEach(s => A(cyl(0.09, 0.09, 0.7, 10), chrome, s * 0.35, 1.25, -2.35, -1.0));
+  K.tube([-0.9, 0.5, 2.5], [0.9, 0.5, 2.5], 0.07, trim);
+  K.seat(0, sy, sz, 1.0);
+  return { sy, seat: { x: 0, z: sz }, passenger: null,
+    wheels: [[1.2, 1.55, 0.52, 0.46], [-1.2, 1.55, 0.52, 0.46], [1.38, -1.35, 0.78, 0.7], [-1.38, -1.35, 0.78, 0.7]],
+    lightsF: [[0.5, 1.12, 2.45, 0.17], [-0.5, 1.12, 2.45, 0.17]], lightsB: [[0.55, 1.05, -2.37, 0.13], [-0.55, 1.05, -2.37, 0.13]],
+    side: { x: 1.0, y: 0.85, z0: -0.45, z1: 1.3, h: 0.4 },
+    tops: [{ y: 1.2, z: 1.15, len: 0.9, w: 0.22 }],
+    roof: { y: 3.03, z: -0.95 }, nose: { y: 1.2, z: 2.1 }, face: { y: 0.92, z: 2.55, r: 0.2 },
+    hw: 1.75, hl: 2.65, camY: 2.1 };
+}
+function carDeportivo(K) {
+  const { A, body, acc, trim, chrome } = K, sy = 0.62, sz = -0.6;
+  A(rbox(3.0, 0.72, 5.8, 0.3), body, 0, 0.7, 0);
+  A(rbox(2.8, 0.22, 2.3, 0.1), body, 0, 1.02, 1.55, 0.12);
+  A(rbox(2.4, 0.05, 2.0, 0.03), K.inner, 0, 1.065, -0.6);
+  [-1, 1].forEach(s => A(rbox(0.85, 0.5, 1.0, 0.24), body, s * 0.6, 1.1, -1.6));
+  A(rbox(2.4, 0.26, 0.36, 0.12), trim, 0, 1.15, 0.3);
+  K.glass(2.5, 0.52, 0, 1.3, 0.62, -0.75);
+  A(rbox(2.55, 0.07, 0.07, 0.03), trim, 0, 1.5, 0.45);
+  A(rbox(3.0, 0.1, 0.62, 0.05), acc, 0, 1.78, -2.55);
+  [-1, 1].forEach(s => { A(rbox(0.1, 0.72, 0.28, 0.04), trim, s * 0.95, 1.4, -2.55); A(rbox(0.1, 0.36, 0.7, 0.04), acc, s * 1.5, 1.78, -2.55); });
+  [-1, 1].forEach(s => A(rbox(0.16, 0.14, 3.0, 0.06), acc, s * 1.47, 0.42, 0));
+  A(rbox(2.6, 0.16, 0.3, 0.07), trim, 0, 0.42, 2.85);
+  [-1, 1].forEach(s => A(cyl(0.12, 0.12, 0.3, 12), chrome, s * 0.45, 0.55, -2.92, Math.PI / 2));
+  K.seat(0.55, sy, sz, 0.9); K.seat(-0.55, sy, sz, 0.9);
+  return { sy, seat: { x: 0.55, z: sz }, passenger: { x: -0.55, z: sz },
+    wheels: [[1.35, 1.9, 0.52, 0.56], [-1.35, 1.9, 0.52, 0.56], [1.35, -1.85, 0.58, 0.62], [-1.35, -1.85, 0.58, 0.62]],
+    lightsF: [[1.0, 0.92, 2.86, 0.2, 1.7, 0.55], [-1.0, 0.92, 2.86, 0.2, 1.7, 0.55]], lightsB: [[1.05, 0.9, -2.88, 0.18, 1.8, 0.5], [-1.05, 0.9, -2.88, 0.18, 1.8, 0.5]],
+    side: { x: 1.5, y: 0.72, z0: -1.1, z1: 1.2, h: 0.36 },
+    tops: [{ y: 1.14, z: 1.6, len: 2.0, rx: 0.12 }],
+    roof: { y: 1.55, z: 0.45 }, nose: { y: 1.05, z: 2.35 }, face: { y: 0.82, z: 2.9, r: 0.25 },
+    hw: 1.7, hl: 3.0, camY: 1.7 };
+}
+function carCamioneta(K) {
+  const { A, body, trim, chrome } = K, sy = 1.15, sz = 0.3;
+  A(rbox(2.9, 1.0, 6.2, 0.3), body, 0, 1.2, 0);
+  A(rbox(2.5, 0.05, 1.8, 0.03), K.inner, 0, 1.7, 0.2);
+  [-1, 1].forEach(s => { A(rbox(0.2, 1.7, 0.24, 0.08), body, s * 1.3, 2.52, 1.3, -0.22); A(rbox(0.2, 1.65, 0.26, 0.08), body, s * 1.3, 2.52, -0.78); });
+  A(rbox(2.9, 0.24, 2.5, 0.12), body, 0, 3.42, 0.3);
+  K.glass(2.4, 1.55, 0, 2.5, 1.35, -0.22);
+  K.glass(2.4, 1.3, 0, 2.45, -0.78);
+  A(rbox(2.5, 0.34, 0.45, 0.14), trim, 0, 1.85, 1.2);
+  [-1, 1].forEach(s => A(rbox(0.18, 0.6, 2.2, 0.07), body, s * 1.36, 1.98, -1.95));
+  A(rbox(2.9, 0.6, 0.18, 0.07), body, 0, 1.98, -3.0);
+  A(rbox(2.5, 0.05, 2.0, 0.02), K.wood, 0, 1.72, -1.95);
+  A(rbox(2.7, 0.3, 0.34, 0.14), chrome, 0, 0.75, 3.12); A(rbox(2.7, 0.3, 0.34, 0.14), chrome, 0, 0.75, -3.12);
+  K.seat(0.6, sy, sz); K.seat(-0.6, sy, sz);
+  const w = [0.66, 0.55];
+  return { sy, seat: { x: 0.6, z: sz }, passenger: { x: -0.6, z: sz },
+    wheels: [[1.35, 2.05, ...w], [-1.35, 2.05, ...w], [1.35, -2.0, ...w], [-1.35, -2.0, ...w]],
+    lightsF: [[1.0, 1.35, 3.1, 0.22], [-1.0, 1.35, 3.1, 0.22]], lightsB: [[1.15, 1.4, -3.1, 0.16], [-1.15, 1.4, -3.1, 0.16]],
+    side: { x: 1.45, y: 1.2, z0: -1.25, z1: 1.3, h: 0.46 },
+    tops: [{ y: 1.7, z: 2.3, len: 1.3 }, { y: 3.54, z: 0.3, len: 2.2 }],
+    roof: { y: 3.54, z: 0.3 }, nose: { y: 1.7, z: 2.8 }, face: { y: 1.22, z: 3.1, r: 0.3 },
+    hw: 1.65, hl: 3.25, camY: 2.5 };
+}
+function carMonster(K) {
+  const { A, body, acc, trim, chrome } = K, sy = 2.4, sz = -0.45;
+  [-1, 1].forEach(s => A(rbox(0.26, 0.26, 4.0, 0.08), trim, s * 0.75, 1.3, 0));
+  [1.75, -1.75].forEach(z => {
+    A(cyl(0.12, 0.12, 3.2, 10), chrome, 0, 1.15, z, 0, 0, Math.PI / 2);
+    [-1, 1].forEach(s => A(cyl(0.16, 0.16, 0.75, 12), acc, s * 1.05, 1.62, z));
+  });
+  A(rbox(2.8, 1.0, 4.4, 0.35), body, 0, 2.35, 0);
+  A(rbox(2.4, 0.05, 2.0, 0.03), K.inner, 0, 2.85, -0.55);
+  A(rbox(2.4, 0.3, 0.4, 0.12), trim, 0, 2.97, 0.55);
+  [-1, 1].forEach(s => { K.tube([s * 1.2, 2.85, -1.35], [s * 1.2, 4.5, -1.35], 0.1, acc); K.tube([s * 1.2, 4.5, -1.35], [s * 1.1, 2.85, -2.05], 0.09, acc); });
+  K.tube([-1.2, 4.5, -1.35], [1.2, 4.5, -1.35], 0.1, acc);
+  const lamp = mat('#FFF6C9', { emissive: '#FFE58A', emissiveIntensity: 0.5 });
+  [-0.6, -0.2, 0.2, 0.6].forEach(x => A(sph(0.14, 10, 8), lamp, x, 4.64, -1.25));
+  [-1, 1].forEach(s => A(cyl(0.13, 0.13, 1.4, 12), chrome, s * 0.6, 3.3, -1.95));
+  A(rbox(3.0, 0.4, 0.45, 0.15), trim, 0, 1.8, 2.3); A(rbox(3.0, 0.4, 0.45, 0.15), trim, 0, 1.8, -2.3);
+  K.seat(0.6, sy, sz); K.seat(-0.6, sy, sz);
+  const w = [1.15, 0.95];
+  return { sy, seat: { x: 0.6, z: sz }, passenger: { x: -0.6, z: sz },
+    wheels: [[1.75, 1.75, ...w], [-1.75, 1.75, ...w], [1.75, -1.75, ...w], [-1.75, -1.75, ...w]],
+    lightsF: [[0.95, 2.45, 2.2, 0.22], [-0.95, 2.45, 2.2, 0.22]], lightsB: [[1.05, 2.45, -2.2, 0.16], [-1.05, 2.45, -2.2, 0.16]],
+    side: { x: 1.4, y: 2.35, z0: -0.85, z1: 0.85, h: 0.46 },
+    tops: [{ y: 2.85, z: 1.55, len: 1.1 }],
+    roof: { y: 4.62, z: -1.35 }, nose: { y: 2.85, z: 1.9 }, face: { y: 2.3, z: 2.2, r: 0.3 },
+    hw: 2.25, hl: 2.95, camY: 3.3 };
+}
+function carKarting(K) {
+  const { A, body, trim, chrome, white } = K, sy = 0.52, sz = -0.45;
+  A(rbox(2.0, 0.14, 3.5, 0.06), trim, 0, 0.3, 0);
+  [-1, 1].forEach(s => A(rbox(0.42, 0.36, 1.5, 0.16), body, s * 1.0, 0.46, -0.1));
+  A(rbox(1.7, 0.36, 0.9, 0.17), body, 0, 0.46, 1.65);
+  A(rbox(1.0, 0.62, 0.07, 0.04), white, 0, 0.82, 1.2, -0.35);
+  A(rbox(0.7, 0.55, 0.6, 0.14), trim, 0.55, 0.62, -1.45);
+  A(cyl(0.08, 0.08, 0.45, 10), chrome, 0.55, 0.75, -1.85, Math.PI / 2);
+  A(rbox(2.3, 0.2, 0.22, 0.09), trim, 0, 0.45, -1.9);
+  K.tube([-0.9, 0.22, 2.25], [0.9, 0.22, 2.25], 0.06, trim);
+  K.seat(0, sy, sz, 0.9);
+  return { sy, seat: { x: 0, z: sz }, passenger: null,
+    wheels: [[1.12, 1.25, 0.42, 0.48], [-1.12, 1.25, 0.42, 0.48], [1.15, -1.3, 0.46, 0.6], [-1.15, -1.3, 0.46, 0.6]],
+    lightsF: [[0.45, 0.58, 2.06, 0.13], [-0.45, 0.58, 2.06, 0.13]], lightsB: [],
+    side: { x: 1.21, y: 0.46, z0: -0.7, z1: 0.5, h: 0.3 },
+    tops: [{ y: 0.64, z: 1.65, len: 0.7, w: 0.2 }],
+    roof: { y: 0.55, z: -1.9, x: -0.7 }, nose: { y: 0.64, z: 1.9 }, face: { y: 0.5, z: 2.1, r: 0.16 },
+    hw: 1.5, hl: 2.15, camY: 1.5 };
+}
+
+const CAR_TYPES = [
+  { id: 'clasico', name: 'Clásico', desc: 'Redondito y con techo. ¡El favorito de la ciudad!', vel: 3, giro: 3, stats: { max: 15, acc: 8, turn: 2.2, bounce: 1, pitch: 1 }, build: carClasico },
+  { id: 'descapotable', name: 'Descapotable', desc: 'Sin techo, para sentir el viento en el pelo.', vel: 4, giro: 3, stats: { max: 17, acc: 9, turn: 2.3, bounce: 0.8, pitch: 1.1 }, build: carDescapotable },
+  { id: 'jeep', name: 'Jeep', desc: 'Ruedas grandes y barra de seguridad. ¡A la aventura!', vel: 3, giro: 2, stats: { max: 14, acc: 8, turn: 2.0, bounce: 1.6, pitch: 0.85 }, build: carJeep },
+  { id: 'buggy', name: 'Buggy', desc: 'Liviano y saltarín, como para correr en la playa.', vel: 4, giro: 4, stats: { max: 16.5, acc: 11, turn: 2.6, bounce: 2.2, pitch: 1.2 }, build: carBuggy },
+  { id: 'deportivo', name: 'Deportivo', desc: 'El más rápido de todos. ¡Tiene alerón!', vel: 5, giro: 4, stats: { max: 22, acc: 12, turn: 2.4, bounce: 0.5, pitch: 1.3 }, build: carDeportivo },
+  { id: 'camioneta', name: 'Camioneta', desc: 'Con una caja atrás para llevar cosas.', vel: 2, giro: 2, stats: { max: 13.5, acc: 7, turn: 1.9, bounce: 1.2, pitch: 0.8 }, build: carCamioneta },
+  { id: 'monster', name: 'Monster truck', desc: '¡Ruedas gigantes! Se ve toda la ciudad desde arriba.', vel: 2, giro: 2, stats: { max: 13, acc: 7, turn: 1.9, bounce: 3, pitch: 0.7 }, build: carMonster },
+  { id: 'karting', name: 'Karting', desc: 'Bajito y ágil. ¡Gira como un trompo!', vel: 4, giro: 5, stats: { max: 18, acc: 14, turn: 3.0, bounce: 0.6, pitch: 1.5 }, build: carKarting }
+];
+const CAR_TYPE = Object.fromEntries(CAR_TYPES.map(t => [t.id, t]));
+const DECALS = [
+  { id: 'ninguno', name: 'Liso' }, { id: 'rayas', name: 'Rayas de carrera', ic: '🏁' }, { id: 'llamas', name: 'Llamas', ic: '🔥' },
+  { id: 'corazones', name: 'Corazones', ic: '💖' }, { id: 'estrellas', name: 'Estrellas', ic: '⭐' }, { id: 'lunares', name: 'Lunares', ic: '⚪' },
+  { id: 'arcoiris', name: 'Arcoíris', ic: '🌈' }, { id: 'vaca', name: 'Vaquita', ic: '🐄' }, { id: 'numero', name: 'Número', ic: '🔢' }
+];
+const rimIc = b => svgI(56, 28, `<circle cx="28" cy="14" r="12.5" fill="#2B2F45"/>${b}`);
+const five = f => [0, 1, 2, 3, 4].map(f).join('');
+const RIMS = [
+  { id: 'clasica', name: 'Clásicas', ic: rimIc('<circle cx="28" cy="14" r="6.5" fill="#fff"/><rect x="26.5" y="8" width="3" height="12" rx="1.5" fill="#C9C3D6"/>') },
+  { id: 'deportiva', name: 'Deportivas', ic: rimIc('<circle cx="28" cy="14" r="8" fill="#9AA3B8"/>' + five(i => `<rect x="27" y="6.5" width="2" height="7.5" rx="1" fill="#F2F4F8" transform="rotate(${i * 72} 28 14)"/>`) + '<circle cx="28" cy="14" r="2.2" fill="#3C4670"/>') },
+  { id: 'dorada', name: 'Doradas', ic: rimIc('<circle cx="28" cy="14" r="8" fill="#FFC93C"/><circle cx="28" cy="14" r="4.6" fill="#FFE58A"/>') },
+  { id: 'arcoiris', name: 'Arcoíris', ic: rimIc(RAINBOW.map((c, i) => `<circle cx="28" cy="14" r="${9 - i * 1.5}" fill="${c}"/>`).join('')) },
+  { id: 'flor', name: 'Flor', ic: rimIc('<circle cx="28" cy="14" r="8.5" fill="#fff"/>' + five(i => `<ellipse cx="28" cy="9.2" rx="2.6" ry="3.4" fill="#FF9CC7" transform="rotate(${i * 72} 28 14)"/>`) + '<circle cx="28" cy="14" r="2.6" fill="#FFD23F"/>') }
+];
+const TOPPERS = [
+  { id: 'ninguno', name: 'Nada' }, { id: 'antena', name: 'Antena pompón', ic: '📡' }, { id: 'orejas', name: 'Orejitas', ic: '🐱' },
+  { id: 'mono', name: 'Moño gigante', ic: '🎀' }, { id: 'cuerno', name: 'Cuerno de unicornio', ic: '🦄' }, { id: 'aleta', name: 'Aleta de tiburón', ic: '🦈' },
+  { id: 'corona', name: 'Corona', ic: '👑' }, { id: 'sirena', name: 'Sirena', ic: '🚨' }
+];
+const EXTRAS = [{ id: 'pestanas', name: 'Ojitos', ic: '👀' }, { id: 'sonrisa', name: 'Sonrisa', ic: '😊' }, { id: 'neon', name: 'Luces neón', ic: '💡' }];
+const HORNS = [{ id: 'clasica', name: 'Clásica', ic: '📯' }, { id: 'pato', name: 'Pato', ic: '🦆' }, { id: 'musical', name: 'Musical', ic: '🎶' }, { id: 'tren', name: 'Tren', ic: '🚂' }, { id: 'payaso', name: 'Payaso', ic: '🤡' }];
+const DEFAULT_CAR = { type: 'descapotable', color: '#A77BF3', accent: '#FFFFFF', deco: 'estrellas', rims: 'arcoiris', topper: 'ninguno', extras: ['pestanas'], horn: 'musical', num: 7 };
+const HEX = /^#[0-9a-f]{6}$/i;
+function fixCarSpec(s) {
+  const r = { type: 'clasico', color: '#FF6FAE', accent: '#FFFFFF', deco: 'ninguno', rims: 'clasica', topper: 'ninguno', extras: [], horn: 'clasica', num: 7 };
+  if (!s || typeof s !== 'object') return r;
+  if (CAR_TYPE[s.type]) r.type = s.type;
+  if (HEX.test(s.color)) r.color = s.color;
+  if (HEX.test(s.accent)) r.accent = s.accent;
+  if (DECALS.some(d => d.id === s.deco)) r.deco = s.deco;
+  if (RIMS.some(d => d.id === s.rims)) r.rims = s.rims;
+  if (TOPPERS.some(d => d.id === s.topper)) r.topper = s.topper;
+  if (HORNS.some(d => d.id === s.horn)) r.horn = s.horn;
+  if (Array.isArray(s.extras)) r.extras = EXTRAS.map(e => e.id).filter(id => s.extras.includes(id));
+  if (Number.isInteger(s.num) && s.num >= 1 && s.num <= 99) r.num = s.num;
+  return r;
+}
+function randomCarSpec() {
+  const color = pick(CAR_COLORS);
+  return fixCarSpec({
+    type: pick(CAR_TYPES).id, color, accent: pick(CAR_COLORS.filter(c => c !== color)),
+    deco: pick(DECALS).id, rims: pick(RIMS).id, topper: Math.random() < 0.4 ? 'ninguno' : pick(TOPPERS).id,
+    extras: EXTRAS.map(e => e.id).filter(() => Math.random() < 0.4), horn: pick(HORNS).id, num: 1 + Math.floor(Math.random() * 12)
+  });
+}
+
+/* side designs: laid flat on the body sides, merged with the body afterwards */
+const numMats = new Map();
+function numMat(n) {
+  let m = numMats.get(n); if (m) return m;
+  const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d');
+  let size = 96; x.font = `800 ${size}px "Baloo 2", "Trebuchet MS", sans-serif`;
+  while (x.measureText(String(n)).width > 104 && size > 40) { size -= 4; x.font = `800 ${size}px "Baloo 2", "Trebuchet MS", sans-serif`; }
+  x.fillStyle = '#26315C'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(String(n), 64, 72);
+  const t = new THREE.CanvasTexture(c); t.anisotropy = 4;
+  m = new THREE.MeshStandardMaterial({ map: t, transparent: true, roughness: 0.5 }); numMats.set(n, m); return m;
+}
+function addDecals(K, L, spec) {
+  const d = spec.deco; if (!d || d === 'ninguno') return;
+  const acc = K.acc, D = L.side, len = D.z1 - D.z0, h = D.h, zc = (D.z0 + D.z1) / 2;
+  if (d === 'rayas') (L.tops || []).forEach(T => { const w = T.w || 0.28; [-1, 1].forEach(s => K.A(box(w, 0.03, T.len), acc, s * (w / 2 + 0.07), T.y + 0.012, T.z, T.rx || 0)); });
+  [-1, 1].forEach(s => {
+    const grp = new THREE.Group(); grp.position.set(s * (D.x + 0.012), D.y, zc); grp.rotation.y = s * Math.PI / 2; K.shell.add(grp);
+    // u runs toward the front of the car, v is up
+    const put = (geo, m, u, v, rz = 0, sc = 1) => { const o = mesh(geo, m, -s * u, v, 0, false); o.rotation.z = rz; o.scale.setScalar(sc); grp.add(o); return o; };
+    if (d === 'rayas') { put(box(len, h * 0.26, 0.02), acc, 0, h * 0.12); put(box(len, h * 0.1, 0.02), acc, 0, -h * 0.2); }
+    else if (d === 'llamas') {
+      const front = len / 2 - 0.02;
+      [[0.3, 0.55], [0.12, 0.85], [-0.06, 1], [-0.24, 0.72], [-0.4, 0.48]].forEach(([vf, lf]) => {
+        const Lt = len * 0.62 * lf, r = h * 0.17;
+        [['#FF4F5E', 1, 0], ['#FF9B4A', 0.72, 0.008], ['#FFD23F', 0.42, 0.016]].forEach(([c, k, dz]) => {
+          const l = Lt * (0.55 + 0.45 * k);
+          const o = put(cone(r * k, l, 10), mat(c, { roughness: 0.5 }), front - l / 2, vf * h, -s * Math.PI / 2);
+          o.scale.set(1, 1, 0.12); o.position.z = dz;
+        });
+      });
+    } else if (d === 'corazones' || d === 'estrellas') {
+      const star = d === 'estrellas', n = Math.max(2, Math.round(len / (star ? 0.62 : 0.75)));
+      const k = h * 0.95 / (star ? 0.26 : 0.21);
+      for (let i = 0; i < n; i++) {
+        const u = (i - (n - 1) / 2) * len / n, small = i % 2 === 1;
+        put(star ? starGeo() : heartGeo(), acc, u, small ? h * 0.12 : -h * 0.04, star ? i * 0.5 : (small ? 0.25 : -0.2), k * (small ? 0.7 : 1));
+      }
+    } else if (d === 'lunares') {
+      const r = seeded(11), n = Math.round(len * 3.2), sc = h / 0.46;
+      for (let i = 0; i < n; i++) put(disc(r() < 0.5 ? 0.12 : 0.08), acc, (i + 0.5) / n * len - len / 2, (i % 2 ? 0.2 : -0.18) * h + (r() - 0.5) * 0.1 * h, 0, sc);
+    } else if (d === 'arcoiris') {
+      const bh = h * 0.92 / 6;
+      RAINBOW.forEach((c, i) => put(box(len, bh, 0.02), mat(c, { roughness: 0.5 }), 0, h * 0.46 - (i + 0.5) * bh));
+    } else if (d === 'vaca') {
+      const r = seeded(29), blk = mat('#2E2A3A', { roughness: 0.7 }), sc = h / 0.46, n = Math.max(2, Math.round(len / 0.8));
+      for (let i = 0; i < n; i++) {
+        const u = (i + 0.5) / n * len - len / 2 + (r() - 0.5) * 0.2, v = (r() - 0.5) * h * 0.4;
+        put(disc(0.15), blk, u, v, 0, sc); put(disc(0.1), blk, u + 0.12 * sc, v + 0.08 * sc, 0, sc); put(disc(0.09), blk, u - 0.1 * sc, v - 0.07 * sc, 0, sc);
+      }
+    } else if (d === 'numero') {
+      put(disc(0.5), K.white, 0, 0, 0, h * 0.95);
+      put(unitPlane(), numMat(spec.num || 7), 0, 0, 0, h * 0.8).position.z = 0.005;
+    }
+  });
+}
+
+/* headlight eyes, a smile, and neon under-glow */
+let _glowTex = null;
+function glowTex() {
+  if (_glowTex) return _glowTex;
+  const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d');
+  const gr = x.createRadialGradient(64, 64, 8, 64, 64, 64);
+  gr.addColorStop(0, 'rgba(255,255,255,0.95)'); gr.addColorStop(0.55, 'rgba(255,255,255,0.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+  x.fillStyle = gr; x.fillRect(0, 0, 128, 128);
+  return (_glowTex = new THREE.CanvasTexture(c));
+}
+const glowMats = new Map();
+function glowMat(c) {
+  let m = glowMats.get(c);
+  if (!m) { m = new THREE.MeshBasicMaterial({ color: c, map: glowTex(), transparent: true, depthWrite: false, fog: false }); glowMats.set(c, m); }
+  return m;
+}
+function addFace(K, L, spec) {
+  const ex = spec.extras || [];
+  if (ex.includes('pestanas')) L.lightsF.forEach(([x, y, z, r, sx = 1, sy = 1]) => {
+    K.A(sph(r * 0.52, 12, 10), K.ink, x - Math.sign(x) * r * 0.1, y - r * 0.12 * sy, z + r * 0.42).scale.set(sx, sy, 0.45);
+    K.A(sph(r * 0.17, 8, 6), K.glint, x + r * 0.08 * sx, y + r * 0.14 * sy, z + r * 0.66);
+    for (let k = -1; k <= 1; k++) K.A(box(0.035, 0.2, 0.035), K.ink, x + k * r * 0.55 * sx, y + r * sy + 0.07 - (k ? 0.03 : 0), z - 0.02, 0, 0, -k * 0.5);
+  });
+  if (ex.includes('sonrisa')) { const F = L.face; K.A(G(`smile${F.r}`, () => new THREE.TorusGeometry(F.r, F.r * 0.16, 8, 20, Math.PI)), K.ink, 0, F.y, F.z + 0.03, 0, 0, Math.PI); }
+}
+function addTopper(K, L, spec, M) {
+  const t = spec.topper, R = L.roof; if (!t || t === 'ninguno') return;
+  const y = R.y, z = R.z;
+  if (t === 'antena') {
+    const a = new THREE.Group(); a.position.set(R.x != null ? R.x : -0.85, y, z); a.userData.dynamic = true;
+    a.add(mesh(cyl(0.03, 0.03, 1.3, 6), K.trim, 0, 0.65, 0)); a.add(mesh(sph(0.2, 12, 10), K.acc, 0, 1.38, 0));
+    K.shell.add(a); M.antenna = a;
+  } else if (t === 'orejas') {
+    const pink = mat('#FFB3CC', { roughness: 0.7 });
+    [-1, 1].forEach(s => { K.A(cone(0.3, 0.55, 12), K.body, s * 0.72, y + 0.24, z, 0, 0, -s * 0.35); K.A(cone(0.17, 0.32, 10), pink, s * 0.71, y + 0.2, z + 0.13, 0, 0, -s * 0.35); });
+  } else if (t === 'mono') {
+    K.A(sph(0.2, 12, 10), K.acc, 0, y + 0.22, z);
+    [-1, 1].forEach(s => { K.A(cone(0.34, 0.6, 14), K.acc, s * 0.36, y + 0.22, z, 0, 0, s * Math.PI / 2); K.A(rbox(0.14, 0.5, 0.06, 0.03), K.acc, s * 0.14, y - 0.02, z + 0.05, 0, 0, s * 0.4); });
+  } else if (t === 'cuerno') {
+    const N = L.nose, gold = mat('#FFC93C', { roughness: 0.3, metalness: 0.4 }), ax = [0, Math.cos(0.4), Math.sin(0.4)];
+    K.A(cone(0.14, 0.8, 14), gold, 0, N.y + 0.34, N.z, 0.4);
+    [[0.2, 0.1], [0.45, 0.06]].forEach(([d, r]) => K.A(G(`hring${r}`, () => new THREE.TorusGeometry(r, 0.022, 6, 16)), K.white, 0, N.y - 0.03 + d * ax[1], N.z - 0.156 + d * ax[2], -(Math.PI / 2 - 0.4)));
+  } else if (t === 'aleta') {
+    const fin = G('sharkfin', () => {
+      const sh = new THREE.Shape();
+      sh.moveTo(0.6, 0); sh.quadraticCurveTo(0.35, 0.75, -0.4, 1.15); sh.quadraticCurveTo(-0.22, 0.5, -0.5, 0); sh.lineTo(0.6, 0);
+      const g = new THREE.ExtrudeGeometry(sh, { depth: 0.1, bevelEnabled: true, bevelThickness: 0.04, bevelSize: 0.04, bevelSegments: 2, curveSegments: 12 });
+      g.translate(0, 0, -0.05); g.rotateY(-Math.PI / 2); return g;
+    });
+    K.A(fin, K.body2, 0, y - 0.02, z);
+  } else if (t === 'corona') {
+    const gold = mat('#FFC93C', { roughness: 0.25, metalness: 0.45 });
+    K.A(cyl(0.5, 0.55, 0.28, 20), gold, 0, y + 0.14, z);
+    for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; K.A(cone(0.12, 0.34, 10), gold, Math.sin(a) * 0.47, y + 0.44, z + Math.cos(a) * 0.47); }
+    K.A(sph(0.1, 10, 8), mat('#FF4F9A', { roughness: 0.2 }), 0, y + 0.14, z + 0.54);
+  } else if (t === 'sirena') {
+    K.A(rbox(1.5, 0.16, 0.45, 0.07), K.trim, 0, y + 0.08, z);
+    const red = new THREE.MeshStandardMaterial({ color: 0xFF4F5E, emissive: 0xFF2D3F, emissiveIntensity: 0.2, roughness: 0.3 });
+    const blue = new THREE.MeshStandardMaterial({ color: 0x4FB6F5, emissive: 0x2E9CFF, emissiveIntensity: 0.2, roughness: 0.3 });
+    K.A(sph(0.24, 14, 10), red, -0.42, y + 0.2, z).scale.set(1.2, 0.9, 1); K.A(sph(0.24, 14, 10), blue, 0.42, y + 0.2, z).scale.set(1.2, 0.9, 1);
+    M.sirens = [red, blue]; M.mats.push(red, blue);
+  }
+}
+function buildWheel(spin, r, w, style) {
+  const W = w + 0.02;
+  const add = (geo, m) => { const o = mesh(geo, m); o.rotation.z = Math.PI / 2; spin.add(o); return o; };
+  add(cyl(r, r, w, 22), mat('#2B2F45', { roughness: 0.85 }));
+  if (style === 'deportiva') {
+    add(cyl(r * 0.62, r * 0.62, W, 18), mat('#9AA3B8', { roughness: 0.3, metalness: 0.5 }));
+    const cm = mat('#F2F4F8', { roughness: 0.2, metalness: 0.5 });
+    for (let i = 0; i < 5; i++) { const a = i / 5 * TAU, o = mesh(box(W + 0.02, r * 0.13, r * 0.52), cm, 0, -Math.sin(a) * r * 0.3, Math.cos(a) * r * 0.3); o.rotation.x = a; spin.add(o); }
+    add(cyl(r * 0.16, r * 0.16, W + 0.05, 10), mat('#3C4670'));
+  } else if (style === 'dorada') {
+    const gm = mat('#FFC93C', { roughness: 0.25, metalness: 0.55 });
+    add(cyl(r * 0.64, r * 0.64, W, 18), gm);
+    add(cyl(r * 0.36, r * 0.36, W + 0.03, 14), mat('#FFE58A', { roughness: 0.3, metalness: 0.3 }));
+    for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; [-1, 1].forEach(s => spin.add(mesh(sph(r * 0.07, 6, 5), gm, s * (W / 2 + 0.01), Math.sin(a) * r * 0.5, Math.cos(a) * r * 0.5))); }
+  } else if (style === 'arcoiris') {
+    RAINBOW.forEach((c, i) => add(cyl(r * (0.7 - i * 0.1), r * (0.7 - i * 0.1), W + i * 0.012, 18), mat(c, { roughness: 0.5 })));
+  } else if (style === 'flor') {
+    add(cyl(r * 0.66, r * 0.66, W, 18), mat('#FFFFFF', { roughness: 0.5 }));
+    const pm = mat('#FF9CC7', { roughness: 0.5 });
+    for (let i = 0; i < 5; i++) { const a = i / 5 * TAU, o = mesh(sph(r * 0.2, 10, 8), pm, 0, Math.sin(a) * r * 0.36, Math.cos(a) * r * 0.36); o.scale.set((W / 2 + 0.015) / (r * 0.2), 1, 1.35); o.rotation.x = -a; spin.add(o); }
+    add(cyl(r * 0.17, r * 0.17, W + 0.05, 12), mat('#FFD23F', { roughness: 0.5 }));
+  } else {
+    add(cyl(r * 0.5, r * 0.5, W, 16), mat('#FFFFFF', { roughness: 0.4 }));
+    spin.add(mesh(box(W + 0.02, r * 0.16, r * 0.8), mat('#C9C3D6', { roughness: 0.4 })));
+  }
+}
+function buildCarModel(spec) {
+  const T = CAR_TYPE[spec.type] || CAR_TYPES[0];
+  const K = carKit(spec), L = T.build(K);
+  const g = new THREE.Group(); g.userData.dynamic = true; g.add(K.shell);
+  const M = { g, shell: K.shell, spec, type: T, stats: T.stats, wheels: [], disposables: [], mats: [], hw: L.hw, hl: L.hl, camY: L.camY, sy: L.sy,
+    seat: L.seat, passenger: L.passenger, steerWheel: null, antenna: null, sirens: null };
+  const headM = mat('#FFF6C9', { emissive: '#FFE58A', emissiveIntensity: 0.45 }), tailM = mat('#FF4F5E', { emissive: '#FF2D3F', emissiveIntensity: 0.3 });
+  L.lightsF.forEach(([x, y, z, r, sx = 1, sy = 1]) => K.A(sph(r, 14, 10), headM, x, y, z).scale.set(sx, sy, 0.6));
+  L.lightsB.forEach(([x, y, z, r, sx = 1, sy = 1]) => K.A(sph(r, 12, 8), tailM, x, y, z).scale.set(sx, sy, 0.5));
+  addFace(K, L, spec); addDecals(K, L, spec); addTopper(K, L, spec, M);
+  // steering wheel in front of the driver's hands
+  const sx = L.seat.x, swy = L.sy + 0.6, swz = L.seat.z + 0.64;
+  K.tube([sx, swy, swz], [sx, swy - 0.4, swz + 0.6], 0.05, K.trim);
+  const sw = new THREE.Group(); sw.position.set(sx, swy, swz); sw.rotation.x = 0.6; sw.userData.dynamic = true; K.shell.add(sw);
+  const swSpin = new THREE.Group(); sw.add(swSpin);
+  swSpin.add(mesh(G('swRing', () => new THREE.TorusGeometry(0.26, 0.045, 8, 24)), K.trim));
+  swSpin.add(mesh(box(0.5, 0.07, 0.05), K.trim));
+  const hub = mesh(cyl(0.09, 0.09, 0.08, 12), K.acc, 0, 0, 0.02); hub.rotation.x = Math.PI / 2; swSpin.add(hub);
+  M.steerWheel = swSpin;
+  // merge every static piece of the body into a few draw calls
+  K.shell.updateMatrixWorld(true);
+  const list = [];
+  (function walk(o) { if (o !== K.shell && o.userData.dynamic) return; if (o.isMesh && !o.material.transparent && !o.material.map) list.push(o); o.children.forEach(walk); })(K.shell);
+  mergeInto(K.shell, list, false).forEach(m => M.disposables.push(m.geometry));
+  L.wheels.forEach(([x, z, r, w]) => {
+    const pivot = new THREE.Group(); pivot.position.set(x, r, z);
+    const spin = new THREE.Group(); pivot.add(spin);
+    buildWheel(spin, r, w, spec.rims);
+    mergeChildren(spin).forEach(m => M.disposables.push(m.geometry));
+    g.add(pivot); M.wheels.push({ pivot, spin, front: z > 0, r });
+  });
+  if ((spec.extras || []).includes('neon')) {
+    const p = new THREE.Mesh(unitPlane(), glowMat(spec.accent)); p.rotation.x = -Math.PI / 2; p.position.y = 0.1;
+    p.scale.set(L.hw * 2 + 1.6, L.hl * 2 + 1.6, 1); p.renderOrder = 2; g.add(p);
+  }
+  M.dispose = () => { M.disposables.forEach(x => x.dispose()); M.mats.forEach(x => x.dispose()); };
+  return M;
+}
+
+/* ---------- cars in the world ---------- */
+function setCarModel(c, M) {
+  if (c.model) { world.remove(c.g); c.model.dispose(); }
+  c.model = M; c.g = M.g; c.shell = M.shell; c.wheels = M.wheels; c.hw = M.hw; c.hl = M.hl; c.stats = M.stats; c.spec = M.spec;
+  c.cr = M.hw; c.offs = M.hl > M.hw ? [-(M.hl - M.hw), M.hl - M.hw] : [0];
+  world.add(c.g);
+}
+function spawnCar(spec, x, z, heading, owned, model) {
+  spec = fixCarSpec(spec);
+  const c = { x, z, heading, speed: 0, steer: 0, bump: 0, owned: !!owned, obs: { x, z, hw: 1, hd: 1, h: 0 }, model: null };
+  setCarModel(c, model || buildCarModel(spec));
+  obstacles.push(c.obs); cars.push(c);
+  c.zone = { id: 'car', car: c, label: owned ? '🚗 Subirse a mi auto' : '🚗 Subirse al auto' };
+  syncCar(c);
+  return c;
+}
+function removeCar(c) {
+  world.remove(c.g); c.model.dispose();
+  const oi = obstacles.indexOf(c.obs); if (oi >= 0) obstacles.splice(oi, 1);
+  const ci = cars.indexOf(c); if (ci >= 0) cars.splice(ci, 1);
+}
+function syncCar(c) {
+  const sh = Math.abs(Math.sin(c.heading)), ch = Math.abs(Math.cos(c.heading));
+  c.obs.x = c.x; c.obs.z = c.z; c.obs.hw = sh * c.hl + ch * c.hw; c.obs.hd = ch * c.hl + sh * c.hw;
+  c.g.position.set(c.x, 0, c.z); c.g.rotation.y = c.heading;
+}
+// distance from a point to the car's footprint (0 when touching)
+function carDist(c, x, z) {
+  const dx = x - c.x, dz = z - c.z, s = Math.sin(c.heading), co = Math.cos(c.heading);
+  return Math.hypot(Math.max(0, Math.abs(dx * co - dz * s) - c.hw), Math.max(0, Math.abs(dx * s + dz * co) - c.hl));
+}
+function carFitsAt(hw, hl, x, z, heading, skip) {
+  if (Math.abs(x) > 72 || Math.abs(z) > 72) return false;
+  const fx = Math.sin(heading), fz = Math.cos(heading), offs = hl > hw ? [-(hl - hw), 0, hl - hw] : [0];
+  for (const s of offs) {
+    const ox = x + fx * s, oz = z + fz * s;
+    _cp.set(ox, 0, oz); collide(_cp, hw + 0.1, skip);
+    if (Math.hypot(_cp.x - ox, _cp.z - oz) > 0.01) return false;
+    if (Math.hypot(player.pos.x - ox, player.pos.z - oz) < hw + 0.7) return false;
+  }
+  return true;
+}
+
+/* ---------- the dealership: Autos Arcoíris ---------- */
+const TT = { x: 61, z: -14 };
+const SPAWNS = [[61, -1.9, -Math.PI / 2], [61, 1.9, -Math.PI / 2], [52, -1.9, -Math.PI / 2], [70, -1.9, -Math.PI / 2], [52, 1.9, -Math.PI / 2], [70, 1.9, -Math.PI / 2], [42, -10, 0], [38, -10, Math.PI]];
+let ttGroup = null, ttModel = null, ttSpin = 0.6, ttDrag = 0;
+function checkerTexture() {
+  const c = document.createElement('canvas'); c.width = 160; c.height = 100; const x = c.getContext('2d');
+  for (let i = 0; i < 8; i++) for (let j = 0; j < 5; j++) { x.fillStyle = (i + j) % 2 ? '#26315C' : '#FFFFFF'; x.fillRect(i * 20, j * 20, 20, 20); }
+  const t = new THREE.CanvasTexture(c); t.magFilter = THREE.NearestFilter; return t;
+}
+function carShop() {
+  const bx = TT.x, bz = -27.5, w = 20, d = 9, h = 6.8;
+  const g = new THREE.Group(); g.position.set(bx, 0, bz);
+  const white = mat('#FFFFFF'), blue = mat('#4FB6F5');
+  g.add(mesh(rlo(w + 0.5, 0.4, d + 0.5, 0.12), mat('#E4DACB'), 0, 0.2, 0));
+  g.add(mesh(rlo(w, h, d, 0.4), mat('#DDF0FF'), 0, h / 2 + 0.3, 0));
+  g.add(mesh(rlo(w + 0.6, 0.7, d + 0.6, 0.25), blue, 0, h + 0.55, 0));
+  [-1, 1].forEach(s => {
+    g.add(mesh(rlo(6.6, 3.9, 0.2, 0.1), white, s * 5.6, 2.45, d / 2 + 0.02));
+    g.add(mesh(rlo(6.1, 3.4, 0.24, 0.08), mat('#BFE6FF', { roughness: 0.25, emissive: '#7CC8FF', emissiveIntensity: 0.12 }), s * 5.6, 2.45, d / 2 + 0.04));
+    g.add(mesh(box(0.1, 3.4, 0.28), white, s * 5.6, 2.45, d / 2 + 0.04));
+    g.add(mesh(box(6.1, 0.1, 0.28), white, s * 5.6, 2.45, d / 2 + 0.04));
+  });
+  g.add(mesh(rlo(3.2, 3.9, 0.24, 0.1), white, 0, 2.25, d / 2 + 0.04));
+  g.add(mesh(rlo(2.7, 3.5, 0.3, 0.12), mat('#FF8FC0'), 0, 2.1, d / 2 + 0.06));
+  g.add(mesh(box(0.1, 3.3, 0.34), white, 0, 2.1, d / 2 + 0.06));
+  const awn = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.16, 2.0), new THREE.MeshStandardMaterial({ map: stripeTexture('#4FB6F5', '#FFFFFF', 10), roughness: 0.7 }));
+  awn.position.set(0, 4.55, d / 2 + 0.9); awn.rotation.x = 0.35; awn.castShadow = true; g.add(awn);
+  const sign = makeSign('Autos Arcoíris', '#FF6FAE', '#FFFFFF', 9.5); sign.position.set(0, 6.0, d / 2 + 0.07); g.add(sign);
+  world.add(g);
+  addObs(bx, bz, w / 2 + 0.3, d / 2 + 0.3, 11);
+  // smiling mascot car turning on the roof
+  const mascot = buildCarModel(fixCarSpec({ type: 'clasico', color: '#FFD23F', accent: '#FF6FAE', deco: 'arcoiris', rims: 'flor', extras: ['pestanas', 'sonrisa'] }));
+  const mg = new THREE.Group(); mg.userData.dynamic = true; mg.position.set(bx, h + 0.9, bz); world.add(mg);
+  mg.add(mesh(cyl(3.2, 3.4, 0.3, 36), white, 0, 0.15, 0));
+  mascot.g.position.y = 0.3; mascot.g.scale.setScalar(1.15); mg.add(mascot.g);
+  animated.push(t => { mascot.g.rotation.y = t * 0.4; });
+  // showroom floor
+  world.add(mesh(rlo(28, 0.06, 15.4, 0.03), mat('#ECE6F4', { roughness: 0.95 }), bx, 0.03, -15.2, false, true));
+  // the design turntable, ringed with marquee bulbs
+  world.add(mesh(cyl(3.9, 4.0, 0.3, 44), white, TT.x, 0.15, TT.z));
+  const bulb = mat('#FFF3C4', { emissive: '#FFD66B', emissiveIntensity: 0.7 });
+  for (let i = 0; i < 26; i++) { const a = i / 26 * TAU; world.add(mesh(sph(0.13, 8, 6), bulb, TT.x + Math.cos(a) * 3.88, 0.33, TT.z + Math.sin(a) * 3.88, false, false)); }
+  ttGroup = new THREE.Group(); ttGroup.userData.dynamic = true; ttGroup.position.set(TT.x, 0.3, TT.z); world.add(ttGroup);
+  ttGroup.add(mesh(cyl(3.7, 3.7, 0.1, 44), mat('#FF9CC7'), 0, 0.05, 0, false, true));
+  ttGroup.add(mesh(cyl(2.9, 2.9, 0.11, 44), mat('#FFF0F7'), 0, 0.055, 0, false, true));
+  for (let i = 0; i < 12; i++) { const a = i / 12 * TAU; ttGroup.add(mesh(sph(0.1, 8, 6), white, Math.cos(a) * 3.3, 0.1, Math.sin(a) * 3.3, false, false)); }
+  addObs(TT.x, TT.z, 3.8, 3.8);
+  zones.push({ id: 'shop', x: TT.x, z: TT.z, r: 6.4, label: '🚗 Diseñar mi auto' });
+  animated.push((t, dt) => {
+    ttDrag = Math.max(0, ttDrag - dt);
+    if (!ttDrag) ttSpin += dt * (mode === 'shop' ? 0.22 : 0.35);
+    ttGroup.rotation.y = ttSpin;
+    if (ttModel && ttModel.sirens) { const on = Math.sin(t * 8) > 0; ttModel.sirens[0].emissiveIntensity = on ? 1.2 : 0.15; ttModel.sirens[1].emissiveIntensity = on ? 0.15 : 1.2; }
+    if (ttModel && ttModel.antenna) ttModel.antenna.rotation.x = Math.sin(t * 3) * 0.12;
+  });
+  // two show cars on podiums
+  [[50.5, -13, { type: 'monster', color: '#7BD85A', accent: '#FFD23F', deco: 'llamas', rims: 'deportiva', extras: ['sonrisa', 'pestanas'] }, 3.4, '#C9F2E2'],
+   [71.5, -13, { type: 'buggy', color: '#FF9B4A', accent: '#4FB6F5', deco: 'numero', num: 3, rims: 'dorada', topper: 'antena' }, 3.1, '#FFE9A8']].forEach(([x, z, sp, r, col], i) => {
+    world.add(mesh(cyl(3.1, 3.2, 0.3, 36), white, x, 0.15, z));
+    const pg = new THREE.Group(); pg.userData.dynamic = true; pg.position.set(x, 0.3, z); world.add(pg);
+    pg.add(mesh(cyl(2.9, 2.9, 0.1, 36), mat(col), 0, 0.05, 0, false, true));
+    const m = buildCarModel(fixCarSpec(sp)); m.g.position.y = 0.1; pg.add(m.g);
+    animated.push(t => { pg.rotation.y = -t * 0.3 + i * 2; });
+    addObs(x, z, r, r);
+  });
+  // flag poles with checkered flags, and bunting to the roof
+  const poleM = mat('#3C4670', { roughness: 0.5 }), flagM = new THREE.MeshStandardMaterial({ map: checkerTexture(), side: THREE.DoubleSide, roughness: 0.8 });
+  const poles = [[47.2, -7.8], [74.8, -7.8]];
+  poles.forEach(([x, z], i) => {
+    world.add(mesh(cyl(0.12, 0.15, 6.4, 10), poleM, x, 3.2, z)); world.add(mesh(sph(0.24, 10, 8), mat('#FFD23F'), x, 6.45, z));
+    addObs(x, z, 0.3, 0.3);
+    const pv = new THREE.Group(); pv.position.set(x, 5.5, z); pv.userData.dynamic = true; world.add(pv);
+    const f = new THREE.Mesh(G('flag', () => new THREE.PlaneGeometry(2.2, 1.4)), flagM); f.position.x = (i ? -1 : 1) * 1.15; f.castShadow = true; pv.add(f);
+    animated.push(t => { pv.rotation.y = Math.sin(t * 2.2 + i) * 0.3; });
+  });
+  const string = mat('#FFFFFF', { roughness: 0.6 });
+  [[poles[0], [bx - w / 2 + 0.3, h + 0.2, bz + d / 2]], [poles[1], [bx + w / 2 - 0.3, h + 0.2, bz + d / 2]]].forEach(([[px, pz], b]) => {
+    const a = [px, 6.0, pz], n = 13, pts = [];
+    for (let i = 0; i <= n; i++) { const t = i / n; pts.push([lerp(a[0], b[0], t), lerp(a[1], b[1], t) - 1.1 * 4 * t * (1 - t), lerp(a[2], b[2], t)]); }
+    for (let i = 0; i < n; i++) {
+      tube(world, pts[i], pts[i + 1], 0.025, string);
+      if (i === 0) continue;
+      const p = pts[i], dx = pts[i + 1][0] - pts[i - 1][0], dz = pts[i + 1][2] - pts[i - 1][2];
+      const fl = mesh(cone(0.3, 0.55, 3), mat(RAINBOW[i % 6], { roughness: 0.6 }), p[0], p[1] - 0.3, p[2]);
+      fl.rotation.set(Math.PI, Math.atan2(-dz, dx), 0, 'YXZ'); fl.scale.set(1, 1, 0.15); world.add(fl);
+    }
+  });
+  // a little stand-up sign by the road
+  [-1, 1].forEach(s => world.add(mesh(cyl(0.08, 0.08, 2.4, 8), poleM, 55.5 + s * 1.9, 1.2, -7.9)));
+  const s2 = makeSign('¡Diseña tu auto!', '#4FB6F5', '#FFFFFF', 4.6); s2.position.set(55.5, 2.2, -7.85); world.add(s2);
+  addObs(55.5, -7.9, 2.1, 0.25);
+}
+
 /* ================= GAMEPLAY ================= */
 const SAVE_KEY = 'ciudadArcoiris.v1';
 function loadSave() { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); return s && s.outfit ? s : null; } catch (e) { return null; } }
 function save() {
-  try { localStorage.setItem(SAVE_KEY, JSON.stringify({ outfit: player.ch.outfit, pets: player.pets.map(p => ({ kind: p.kind, color: p.color, name: p.name })) })); } catch (e) { }
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      outfit: player.ch.outfit, pets: player.pets.map(p => ({ kind: p.kind, color: p.color, name: p.name })),
+      cars: ownedCars.map(c => ({ spec: c.spec, x: Math.round(c.x * 100) / 100, z: Math.round(c.z * 100) / 100, h: Math.round(c.heading * 1000) / 1000 })),
+      shop: shopSpec
+    }));
+  } catch (e) { }
 }
 function fixOutfit(o) {
   const d = DEFAULT_OUTFIT, r = JSON.parse(JSON.stringify(d));
@@ -1691,7 +2289,9 @@ function fixOutfit(o) {
   return r;
 }
 
-let mode = 'intro'; // intro | play | closet | pets
+let mode = 'intro'; // intro | play | closet | pets | shop | drive
+const ownedCars = [], MAX_CARS = 4;
+let lastCar = null, shopSpec = fixCarSpec(DEFAULT_CAR);
 const player = { ch: null, pos: new THREE.Vector3(9, 0, -1.5), vel: new THREE.Vector3(), facing: Math.PI * 0.8, vy: 0, y: 0, air: false, phase: 0, speed01: 0, wave: 0, happy: 0, iceTime: 0, pets: [] };
 const cam = { yaw: 0.35, pitch: 0.36, dist: 11.5, look: new THREE.Vector3(), pos: new THREE.Vector3(), closetYaw: 0 };
 const input = { jx: 0, jy: 0, jump: false, keys: {} };
@@ -1828,7 +2428,7 @@ function updateNPCs(dt, t) {
       if (d < 0.15) { if (Math.random() < 0.35) n.wait = 1 + Math.random() * 2.5; npcTarget(n); }
       else {
         const st = Math.min(d, n.speed * dt), nx = n.pos.x + dx / d * st, nz = n.pos.z + dz / d * st;
-        if (cars.some(c => { const dn = Math.hypot(nx - c.x, nz - c.z); return dn < 2.6 && dn < Math.hypot(n.pos.x - c.x, n.pos.z - c.z); })) { n.blocked = (n.blocked || 0) + dt; if (n.blocked > 1.2) { n.blocked = 0; npcTarget(n); } }
+        if (cars.some(c => { const dn = carDist(c, nx, nz); return dn < 0.7 && dn < carDist(c, n.pos.x, n.pos.z); })) { n.blocked = (n.blocked || 0) + dt; if (n.blocked > 1.2) { n.blocked = 0; npcTarget(n); } }
         else { n.blocked = 0; n.pos.x = nx; n.pos.z = nz; moving = true; }
         n.facing = lerpAngle(n.facing, Math.atan2(dx, dz), 1 - Math.exp(-dt * 10));
       }
@@ -1848,6 +2448,7 @@ function areaName(x, z) {
   if (inB(5.5, 34.5, 5.5, 34.5)) return 'Refugio de Mascotas';
   if (inB(-34.5, -5.5, 5.5, 21)) return 'Heladería';
   if (inB(-34.5, -5.5, 21, 34.5)) return 'Mi Casa';
+  if (inB(45.5, 76, -34.5, -5.5)) return 'Autos Arcoíris';
   for (const L of LINES) { if (Math.abs(x - L) < 5.6) return STREET.x[L]; if (Math.abs(z - L) < 5.6) return STREET.z[L]; }
   return 'Barrio Arcoíris';
 }
@@ -1855,7 +2456,7 @@ let currentZone = null;
 function updateZones() {
   let found = null;
   if (mode === 'play') for (const q of zones) if (Math.hypot(player.pos.x - q.x, player.pos.z - q.z) < q.r) { found = q; break; }
-  if (mode === 'play' && !found) { const c = nearestCar(3.4); if (c) found = c.zone; }
+  if (mode === 'play' && !found) { const c = nearestCar(1.5); if (c) found = c.zone; }
   if (found !== currentZone) { currentZone = found; setActionButton(found); }
 }
 
@@ -1882,7 +2483,7 @@ function updateCamera(dt) {
   if (mode === 'drive') {
     const c = driving;
     if (!pointers.size) cam.yaw = lerpAngle(cam.yaw, c.heading + Math.PI, 1 - Math.exp(-dt * (Math.abs(c.speed) > 1 ? 2.6 : 0.8)));
-    _look.set(c.x, 1.7, c.z);
+    _look.set(c.x, c.model.camY, c.z);
     const dist = cameraBlock(_look, cam.yaw, cam.pitch, cam.dist + Math.abs(c.speed) * 0.12);
     const cp = Math.cos(cam.pitch) * dist;
     _pos.set(_look.x + Math.sin(cam.yaw) * cp, _look.y + Math.sin(cam.pitch) * dist, _look.z + Math.cos(cam.yaw) * cp);
@@ -1894,6 +2495,17 @@ function updateCamera(dt) {
     const cp = Math.cos(cam.pitch) * dist;
     _pos.set(_look.x + Math.sin(cam.yaw) * cp, _look.y + Math.sin(cam.pitch) * dist, _look.z + Math.cos(cam.yaw) * cp);
     k = 1 - Math.exp(-dt * 9);
+  } else if (mode === 'shop') {
+    const sheet = panelIsSheet(), yaw = 0.35;
+    const size = ttModel ? Math.max(ttModel.hl, ttModel.hw * 1.25) : 3;
+    let d = 6.5 + size * 1.7; if (camera.aspect < 1) d *= 1.35;
+    const rx = Math.cos(yaw), rz = -Math.sin(yaw);
+    _look.set(TT.x, 1.0 + (ttModel ? ttModel.camY * 0.3 : 0.6), TT.z);
+    _pos.set(_look.x + Math.sin(yaw) * d, _look.y + d * 0.3, _look.z + Math.cos(yaw) * d);
+    const vt = Math.tan(camera.fov * Math.PI / 360), ht = vt * camera.aspect;
+    if (sheet) _look.y -= 0.55 * d * vt;
+    else { _look.x += rx * 0.44 * d * ht; _look.z += rz * 0.44 * d * ht; }
+    k = 1 - Math.exp(-dt * 4);
   } else {
     const sheet = panelIsSheet(), yaw = cam.closetYaw;
     const faceTab = mode === 'closet' && ['eyes', 'mouth', 'paint', 'hair', 'head'].includes(closetTab);
@@ -1911,29 +2523,54 @@ function updateCamera(dt) {
   cam.pos.lerp(_pos, k); cam.look.lerp(_look, k);
   camera.position.copy(cam.pos); camera.lookAt(cam.look);
   fill.position.set(cam.pos.x, cam.pos.y + 3, cam.pos.z); fill.target.position.copy(cam.look);
-  fill.intensity = lerp(fill.intensity, mode === 'closet' || mode === 'pets' ? 0.7 : 0.3, k);
+  fill.intensity = lerp(fill.intensity, mode === 'closet' || mode === 'pets' || mode === 'shop' ? 0.7 : 0.3, k);
   sun.position.set(p.x + SUN_OFF.x, SUN_OFF.y, p.z + SUN_OFF.z);
   sun.target.position.set(p.x, 0, p.z);
 }
 
 /* ================= DRIVING ================= */
 let driving = null;
-const DRIVE = { max: 15, rev: 5.5, acc: 8, brake: 22, drag: 3.2 };
+const DRIVE = { rev: 5.5, brake: 22, drag: 3.2 };
 const _cp = new THREE.Vector3();
 
 function nearestCar(r) {
   let best = null, bd = r;
-  for (const c of cars) { const d = Math.hypot(player.pos.x - c.x, player.pos.z - c.z); if (d < bd) { bd = d; best = c; } }
+  for (const c of cars) { const d = carDist(c, player.pos.x, player.pos.z); if (d < bd) { bd = d; best = c; } }
   return best;
+}
+// put the character on the driver's seat, sitting down
+function seatPlayer(c) {
+  const M = c.model;
+  player.ch.root.position.set(M.seat.x, M.sy + 0.16 - (0.8 + player.ch.rig.lift), M.seat.z);
+  player.ch.root.rotation.set(0, 0, 0);
+}
+function sitRig(R, t, steer, sp) {
+  R.body.position.y = 0; R.body.rotation.z = 0;
+  R.legL.rotation.x = -1.42; R.legR.rotation.x = -1.42;
+  R.armL.rotation.set(-1.2 + steer * 0.22, 0, 0.35);
+  R.armR.rotation.set(-1.2 - steer * 0.22, 0, -0.35);
+  R.head.rotation.set(Math.sin(t * 2.2) * 0.02, -steer * 0.35, 0);
+  if (R.wings) R.wings.forEach(w => { w.rotation.y = w.userData.s * (0.35 + Math.sin(t * (6 + sp * 10)) * 0.28); });
+  if (R.spin) R.spin.forEach(b => { b.rotation.y = t * 1.6; });
+  if (R.cape) R.cape.rotation.x = 0.5 + sp * 0.7 + Math.sin(t * 9) * 0.08 * sp;
 }
 function enterCar(c) {
   if (mode !== 'play' || !c) return;
   driving = c; mode = 'drive';
-  player.vel.set(0, 0, 0); player.ch.root.visible = false; player.air = false; player.y = 0;
+  player.vel.set(0, 0, 0); player.air = false; player.y = 0;
   c.speed = 0; c.steer = 0;
+  c.shell.add(player.ch.root); seatPlayer(c);
+  sitRig(player.ch.rig, clock, 0, 0);
+  // the first pet hops into the passenger seat
+  const M = c.model;
+  if (M.passenger && player.pets.length) {
+    const p = player.pets[0]; p.riding = c; c.shell.add(p.obj.root);
+    p.obj.root.position.set(M.passenger.x, M.sy, M.passenger.z); p.obj.root.rotation.set(0, 0, 0);
+  }
+  if (c.owned) lastCar = c;
   gameEl.classList.add('driving'); setActionButton(null); currentZone = null;
   input.brake = false;
-  cam.dist = Math.max(cam.dist, 13);
+  cam.dist = Math.max(cam.dist, 10 + c.hl * 1.3);
   sfx('open'); startEngine();
   joyHint.textContent = '¡Maneja aquí!'; joyHint.hidden = false;
   setTimeout(() => { joyHint.hidden = true; }, 3500);
@@ -1945,18 +2582,31 @@ function spotIsFree(x, z) {
 function exitCar() {
   const c = driving; if (!c) return;
   const fx = Math.sin(c.heading), fz = Math.cos(c.heading), lx = Math.cos(c.heading), lz = -Math.sin(c.heading);
-  const tries = [[lx * 2.4, lz * 2.4], [-lx * 2.4, -lz * 2.4], [-fx * 3.4, -fz * 3.4], [fx * 3.4, fz * 3.4], [lx * 3.6, lz * 3.6], [-lx * 3.6, -lz * 3.6]];
-  let spot = tries.find(([dx, dz]) => spotIsFree(c.x + dx, c.z + dz)) || tries[0];
+  const a = c.hw + 0.9, b = c.hl + 1.0;
+  const tries = [[lx * a, lz * a], [-lx * a, -lz * a], [-fx * b, -fz * b], [fx * b, fz * b], [lx * (a + 1.2), lz * (a + 1.2)], [-lx * (a + 1.2), -lz * (a + 1.2)]];
+  const spot = tries.find(([dx, dz]) => spotIsFree(c.x + dx, c.z + dz)) || tries[0];
+  scene.add(player.ch.root);
   player.pos.set(c.x + spot[0], 0, c.z + spot[1]); collide(player.pos, 0.5);
-  player.facing = c.heading; player.ch.root.visible = true; player.happy = 0.5;
-  c.speed = 0; c.steer = 0; c.wheels.forEach(w => { if (w.front) w.pivot.rotation.y = 0; }); c.shell.rotation.set(0, 0, 0);
+  player.ch.root.position.copy(player.pos); player.ch.root.rotation.set(0, c.heading, 0);
+  player.facing = c.heading; player.happy = 0.5;
+  player.pets.forEach(p => {
+    if (!p.riding) return;
+    p.riding = null; scene.add(p.obj.root);
+    p.pos.set(player.pos.x - fx * 1.3, 0, player.pos.z - fz * 1.3); p.facing = c.heading;
+  });
+  c.speed = 0; c.steer = 0; c.wheels.forEach(w => { if (w.front) w.pivot.rotation.y = 0; });
+  c.shell.rotation.set(0, 0, 0); c.shell.position.y = 0;
+  const M = c.model;
+  if (M.steerWheel) M.steerWheel.rotation.z = 0;
+  if (M.sirens) M.sirens.forEach(m => { m.emissiveIntensity = 0.2; });
   driving = null; mode = 'play'; gameEl.classList.remove('driving');
   input.brake = false; stopEngine(); sfx('open');
   cam.yaw = player.facing + Math.PI;
+  if (c.owned) { lastCar = c; save(); }
 }
 
 function updateCar(dt) {
-  const c = driving;
+  const c = driving, S = c.stats, M = c.model;
   let jx = input.jx, jy = input.jy;
   const k = input.keys;
   const kx = (k.KeyD || k.ArrowRight ? 1 : 0) - (k.KeyA || k.ArrowLeft ? 1 : 0);
@@ -1971,48 +2621,73 @@ function updateCar(dt) {
     if (c.speed > 0.4) c.speed -= DRIVE.brake * dt;
     else c.speed = Math.max(-DRIVE.rev, c.speed - 6 * dt);
   } else if (mag > 0) {
-    c.speed += (c.speed < 0 ? DRIVE.brake : DRIVE.acc * (c.speed > 10 ? 0.6 : 1)) * mag * dt;
+    c.speed += (c.speed < 0 ? DRIVE.brake : S.acc * (c.speed > S.max * 0.66 ? 0.6 : 1)) * mag * dt;
   } else c.speed -= Math.sign(c.speed) * Math.min(Math.abs(c.speed), DRIVE.drag * dt);
-  c.speed = clamp(c.speed, -DRIVE.rev, DRIVE.max * (mag > 0 || brake ? Math.max(0.35, mag) : 1));
+  c.speed = clamp(c.speed, -DRIVE.rev, S.max * (mag > 0 || brake ? Math.max(0.35, mag) : 1));
 
   c.steer = lerp(c.steer, jx, 1 - Math.exp(-dt * 7));
   const grip = clamp(Math.abs(c.speed) / 4, 0, 1) * (c.speed >= 0 ? 1 : -1);
-  c.heading -= c.steer * 2.2 * grip * dt;
+  c.heading -= c.steer * S.turn * grip * dt;
 
   c.x += Math.sin(c.heading) * c.speed * dt;
   c.z += Math.cos(c.heading) * c.speed * dt;
-  // bump into houses, trees, other cars and neighbours (two circles along the car)
+  // bump into houses, trees, other cars and neighbours (circles along the car)
   let px = 0, pz = 0;
   const fx = Math.sin(c.heading), fz = Math.cos(c.heading);
-  for (const s of [-1.05, 1.05]) {
+  for (const s of c.offs) {
     const ox = c.x + fx * s, oz = c.z + fz * s;
-    _cp.set(ox, 0, oz); collide(_cp, 1.12, c.obs);
+    _cp.set(ox, 0, oz); collide(_cp, c.cr, c.obs);
     px += _cp.x - ox; pz += _cp.z - oz;
   }
-  for (const n of npcs) {
-    const dx = c.x - n.pos.x, dz = c.z - n.pos.z, d = Math.hypot(dx, dz);
-    if (d < 2.4 && d > 1e-4) { px += dx / d * (2.4 - d); pz += dz / d * (2.4 - d); }
+  for (const n of npcs) for (const s of c.offs) {
+    const ox = c.x + fx * s, oz = c.z + fz * s, dx = ox - n.pos.x, dz = oz - n.pos.z, d = Math.hypot(dx, dz), R = c.cr + 0.45;
+    if (d < R && d > 1e-4) { px += dx / d * (R - d); pz += dz / d * (R - d); }
   }
   const push = Math.hypot(px, pz);
   if (push > 0.001) {
     c.x += px; c.z += pz;
-    if (Math.abs(c.speed) > 3 && c.bump <= 0) { sfx('bonk'); c.bump = 0.4; c.shell.position.y = 0.12; }
+    if (Math.abs(c.speed) > 3 && c.bump <= 0) { sfx('bonk'); c.bump = 0.4; c.shell.position.y = 0.12 + 0.05 * S.bounce; }
     c.speed *= Math.abs(c.speed) > 3 ? 0.35 : 0.8;
   }
   c.bump -= dt;
   c.x = clamp(c.x, -73, 73); c.z = clamp(c.z, -73, 73);
   syncCar(c);
 
-  // a little body roll and bounce, spinning wheels
-  const sp01 = c.speed / DRIVE.max;
-  c.shell.rotation.z = lerp(c.shell.rotation.z, c.steer * 0.08 * clamp(sp01 * 2, -1, 1), 1 - Math.exp(-dt * 6));
-  c.shell.rotation.x = lerp(c.shell.rotation.x, -(brake ? 0.04 : 0) * Math.sign(c.speed), 1 - Math.exp(-dt * 6));
-  c.shell.position.y = lerp(c.shell.position.y, Math.abs(Math.sin(clock * 18)) * 0.02 * Math.abs(sp01), 1 - Math.exp(-dt * 10));
-  c.wheels.forEach(w => { w.spin.rotation.x += c.speed * dt / 0.42; if (w.front) w.pivot.rotation.y = -c.steer * 0.45; });
+  // body roll and bounce, spinning wheels, steering wheel
+  const sp01 = c.speed / S.max, e6 = 1 - Math.exp(-dt * 6);
+  c.shell.rotation.z = lerp(c.shell.rotation.z, c.steer * 0.08 * clamp(sp01 * 2, -1, 1), e6);
+  c.shell.rotation.x = lerp(c.shell.rotation.x, -(brake ? 0.04 : 0) * Math.sign(c.speed) + Math.sin(clock * 7) * 0.012 * (S.bounce - 1) * Math.abs(sp01), e6);
+  c.shell.position.y = lerp(c.shell.position.y, Math.abs(Math.sin(clock * 18)) * 0.02 * S.bounce * Math.abs(sp01), 1 - Math.exp(-dt * 10));
+  c.wheels.forEach(w => { w.spin.rotation.x += c.speed * dt / w.r; if (w.front) w.pivot.rotation.y = -c.steer * 0.45; });
+  if (M.steerWheel) M.steerWheel.rotation.z = c.steer * 1.4;
+  if (M.antenna) M.antenna.rotation.x = lerp(M.antenna.rotation.x, -clamp(sp01, -1, 1) * 0.5 + Math.sin(clock * 11) * 0.1 * Math.abs(sp01), 1 - Math.exp(-dt * 8));
+  if (M.sirens) { const on = Math.sin(clock * 12) > 0; M.sirens[0].emissiveIntensity = on ? 1.3 : 0.15; M.sirens[1].emissiveIntensity = on ? 0.15 : 1.3; }
 
   player.pos.set(c.x, 0, c.z); player.facing = c.heading;
-  player.ch.root.position.set(c.x, 0, c.z);
+  seatPlayer(c);
+  sitRig(player.ch.rig, clock, c.steer, Math.abs(sp01));
+  for (const p of player.pets) if (p.riding) animatePet(p.obj, clock, 0, dt);
   setEngine(Math.abs(c.speed));
+}
+
+// bring your own car next to you
+function callCar() {
+  if (mode !== 'play') return;
+  const c = lastCar && ownedCars.includes(lastCar) ? lastCar : ownedCars[ownedCars.length - 1];
+  if (!c) { toast('Todavía no tienes auto. ¡Ve a Autos Arcoíris a diseñar uno! 🚗'); return; }
+  const f = Math.round(player.facing / (Math.PI / 2)) * (Math.PI / 2);
+  const fx = Math.sin(f), fz = Math.cos(f), lx = Math.cos(f), lz = -Math.sin(f);
+  const tries = [];
+  [c.hw + 1.2, c.hw + 2.6, c.hw + 4.2].forEach(a => tries.push([lx * a, lz * a], [-lx * a, -lz * a]));
+  [c.hl + 1.4, c.hl + 3.2].forEach(b => tries.push([fx * b, fz * b], [-fx * b, -fz * b]));
+  for (const [dx, dz] of tries) {
+    const x = player.pos.x + dx, z = player.pos.z + dz;
+    if (carFitsAt(c.hw, c.hl, x, z, f, c.obs)) {
+      c.x = x; c.z = z; c.heading = f; syncCar(c); lastCar = c;
+      sfx('adopt'); toast('¡Aquí está tu auto!'); save(); return;
+    }
+  }
+  toast('No cabe tu auto aquí. Prueba en la calle.');
 }
 
 /* ================= AUDIO ================= */
@@ -2077,6 +2752,22 @@ function sfx(kind) {
   else if (kind === 'horn') [0, 0.24].forEach(d => { tone(466, t + d, 0.2, 'square', 0.12, sfxGain, 0.01); tone(587, t + d, 0.2, 'square', 0.1, sfxGain, 0.01); });
 }
 
+function toneF(freq, t, dur, type, gain, fType, fFreq, freqEnd, attack = 0.01) {
+  const o = AC.createOscillator(), f = AC.createBiquadFilter(), g = AC.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t); if (freqEnd) o.frequency.exponentialRampToValueAtTime(freqEnd, t + dur);
+  f.type = fType; f.frequency.value = fFreq; f.Q.value = 2.5;
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + attack); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(f); f.connect(g); g.connect(sfxGain); o.start(t); o.stop(t + dur + 0.05);
+}
+function hornSound(kind) {
+  if (!AC) return; const t = AC.currentTime + 0.01;
+  if (kind === 'pato') [0, 0.2].forEach(d => { toneF(560, t + d, 0.16, 'sawtooth', 0.55, 'bandpass', 1100, 420); toneF(565, t + d, 0.16, 'square', 0.2, 'bandpass', 2000, 430); });
+  else if (kind === 'musical') [72, 76, 79, 84, 79, 84].forEach((m, i) => tone(mtof(m), t + i * 0.1, 0.14, 'triangle', 0.5, sfxGain));
+  else if (kind === 'tren') [0, 0.42].forEach(d => [466, 554, 698].forEach(f => toneF(f, t + d, 0.38, 'sawtooth', 0.2, 'lowpass', 1800, 0, 0.04)));
+  else if (kind === 'payaso') [0, 0.22].forEach((d, i) => toneF(i ? 700 : 900, t + d, 0.18, 'square', 0.35, 'bandpass', 1400, i ? 520 : 650));
+  else sfx('horn');
+}
+
 /* soft engine hum while driving */
 let engine = null;
 function startEngine() {
@@ -2087,7 +2778,7 @@ function startEngine() {
   g.gain.setTargetAtTime(0.14, AC.currentTime, 0.2);
   engine = { o, g };
 }
-function setEngine(speed) { if (engine) engine.o.frequency.setTargetAtTime(48 + speed * 7, AC.currentTime, 0.08); }
+function setEngine(speed) { if (engine) engine.o.frequency.setTargetAtTime((48 + speed * 7) * (driving ? driving.stats.pitch : 1), AC.currentTime, 0.08); }
 function stopEngine() {
   if (!engine) return; const e = engine; engine = null;
   e.g.gain.setTargetAtTime(0.0001, AC.currentTime, 0.1); setTimeout(() => { try { e.o.stop(); } catch (_) { } }, 600);
@@ -2131,6 +2822,7 @@ canvas.addEventListener('pointermove', e => {
   const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
   if (pointers.size === 1) {
     if (mode === 'closet' || mode === 'pets') player.facing += dx * 0.012;
+    else if (mode === 'shop') { ttSpin += dx * 0.012; ttDrag = 1.5; }
     else if (mode === 'play' || mode === 'drive') { cam.yaw -= dx * 0.0065; cam.pitch = clamp(cam.pitch + dy * 0.004, 0.08, 1.15); }
   } else if (pointers.size === 2 && (mode === 'play' || mode === 'drive')) {
     const [a, b] = [...pointers.values()], d = Math.hypot(a.x - b.x, a.y - b.y);
@@ -2151,7 +2843,7 @@ window.addEventListener('keydown', e => {
   if (e.code === 'Space' && mode === 'play') { input.jump = true; e.preventDefault(); }
   if (e.code === 'Space' && mode === 'drive') e.preventDefault();
   if (e.code === 'KeyE') { if (mode === 'drive') exitCar(); else if (mode === 'play' && currentZone && currentZone.id === 'car') enterCar(currentZone.car); }
-  if (e.code === 'KeyH' && mode === 'drive') sfx('horn');
+  if (e.code === 'KeyH' && mode === 'drive') honk();
 });
 window.addEventListener('keyup', e => { input.keys[e.code] = false; });
 window.addEventListener('blur', () => { input.keys = {}; });
@@ -2169,15 +2861,18 @@ const brakeOff = () => { input.brake = false; btnBrake.classList.remove('held');
 btnBrake.addEventListener('pointerdown', brakeOn);
 ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => btnBrake.addEventListener(ev, brakeOff));
 $('#btnExit').addEventListener('click', exitCar);
-$('#btnHorn').addEventListener('click', () => {
-  sfx('horn');
-  npcs.forEach(n => { if (n.pos.distanceTo(player.pos) < 12 && n.cool <= 4) { n.greet = 2.2; n.cool = 8; npcSay(n, pick(['¡Tuut tuut!', '¡Qué lindo auto!', '¡Hola!'])); } });
-});
+function honk() {
+  hornSound(driving ? driving.spec.horn : 'clasica');
+  npcs.forEach(n => { if (n.pos.distanceTo(player.pos) < 12 && n.cool <= 4) { n.greet = 2.2; n.cool = 8; npcSay(n, pick(['¡Tuut tuut!', '¡Qué lindo auto!', '¡Hola!', '¡Qué auto tan bonito!'])); } });
+}
+$('#btnHorn').addEventListener('click', honk);
 $('#btnCloset').addEventListener('click', openCloset);
 $('#btnPets').addEventListener('click', openPets);
+$('#btnMyCar').addEventListener('click', callCar);
 btnAction.addEventListener('click', () => {
   const id = btnAction.dataset.id;
-  if (id === 'closet') openCloset(); else if (id === 'pets') openPets(); else if (id === 'icecream') giveIceCream(); else if (id === 'car' && currentZone) enterCar(currentZone.car);
+  if (id === 'closet') openCloset(); else if (id === 'pets') openPets(); else if (id === 'icecream') giveIceCream();
+  else if (id === 'shop') openShop(); else if (id === 'car' && currentZone) enterCar(currentZone.car);
 });
 const btnMusic = $('#btnMusic');
 btnMusic.addEventListener('click', () => {
@@ -2301,6 +2996,120 @@ function updatePreview(dt, t) {
   animatePet(preview, t, 0, dt);
 }
 
+/* ---------- car shop ---------- */
+const shopPanel = $('#shopPanel'), shopTabsEl = $('#shopTabs'), shopBody = $('#shopBody'), btnBuy = $('#btnBuy');
+const SHOP_TABS = [{ id: 'modelo', label: 'Modelo' }, { id: 'pintura', label: 'Pintura' }, { id: 'diseno', label: 'Diseño' }, { id: 'ruedas', label: 'Ruedas' }, { id: 'adornos', label: 'Adornos' }, { id: 'bocina', label: 'Bocina' }, { id: 'garaje', label: 'Mi garaje' }];
+let shopTab = 'modelo', shopEditing = null;
+const clone = o => JSON.parse(JSON.stringify(o));
+function carIcon(type, c, a) {
+  const o = 'stroke="rgba(38,49,92,.35)" stroke-width="1"', gl = '#BFE6FF';
+  const wh = (x, y, r) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#2B2F45"/><circle cx="${x}" cy="${y}" r="${(r * 0.42).toFixed(1)}" fill="#E6E9F2"/>`;
+  const P = {
+    clasico: `<path d="M14 12 L17 4 H38 L42 12Z" fill="${c}" ${o}/><path d="M18.5 11 L20.5 6 H27 V11Z M30 11 V6 H36 L38.5 11Z" fill="${gl}"/><rect x="15" y="2" width="25" height="3" rx="1.5" fill="${a}" ${o}/><rect x="4" y="11" width="48" height="11" rx="5" fill="${c}" ${o}/>` + wh(15, 22, 5) + wh(41, 22, 5),
+    descapotable: `<rect x="20" y="5" width="5" height="8" rx="2" fill="${a}" ${o}/><path d="M31 12 L34 5.5" stroke="#9AA3B8" stroke-width="2.4" stroke-linecap="round"/><path d="M3 19 V15 Q3 12 8 12 H46 Q53 12 53 16 V19Z" fill="${c}" ${o}/>` + wh(13, 20, 5) + wh(43, 20, 5),
+    jeep: `<circle cx="4.5" cy="13" r="4" fill="#2B2F45"/><path d="M16 8 V2 H23 V8" fill="none" stroke="${a}" stroke-width="2.4" stroke-linejoin="round"/><path d="M35 8 V3" stroke="#3C4670" stroke-width="2.4" stroke-linecap="round"/><rect x="6" y="8" width="44" height="12" rx="2" fill="${c}" ${o}/>` + wh(16, 21, 6) + wh(40, 21, 6),
+    buggy: `<path d="M17 14 L20 3 H31 L38 14" fill="none" stroke="${a}" stroke-width="2.4" stroke-linejoin="round"/><path d="M11 13 H40 L51 16 Q52 19 49 20 H11Z" fill="${c}" ${o}/>` + wh(15, 20, 7) + wh(45, 22, 5),
+    deportivo: `<path d="M2 7 H10 M6 7 V12" stroke="${a}" stroke-width="2.4" stroke-linecap="round"/><path d="M3 20 V14 Q4 11 12 11 L22 7 H30 L38 11 Q50 12 53 16 V20Z" fill="${c}" ${o}/><path d="M24 8.5 H29 L34 11 H22Z" fill="${gl}"/>` + wh(13, 20, 5) + wh(43, 20, 5),
+    camioneta: `<path d="M27 11 V3 H38 Q41 3 43 7 L45 11Z" fill="${c}" ${o}/><path d="M30 10 V5 H37 L39.5 10Z" fill="${gl}"/><rect x="3" y="10" width="51" height="10" rx="3" fill="${c}" ${o}/><path d="M6 13.5 H24" stroke="rgba(38,49,92,.3)" stroke-width="1.5"/>` + wh(12, 21, 5.5) + wh(44, 21, 5.5),
+    monster: `<path d="M19 4 V1 H25 V4" fill="none" stroke="${a}" stroke-width="2" stroke-linejoin="round"/><path d="M11 12 V6 Q11 4 14 4 H38 Q44 4 45 8 L46 12Z" fill="${c}" ${o}/>` + wh(15, 19.5, 7.5) + wh(41, 19.5, 7.5),
+    karting: `<rect x="15" y="9" width="4.5" height="8" rx="1.5" fill="${a}" ${o}/><path d="M30 16 L33 10" stroke="#3C4670" stroke-width="2" stroke-linecap="round"/><path d="M5 20 L9 16 H47 L51 20Z" fill="${c}" ${o}/>` + wh(12, 22, 4.5) + wh(44, 22, 4.5)
+  };
+  return svgI(56, 28, P[type]);
+}
+const stars = n => '★'.repeat(n) + '☆'.repeat(5 - n);
+function refreshTT() {
+  if (ttModel) { ttGroup.remove(ttModel.g); ttModel.dispose(); }
+  ttModel = buildCarModel(shopSpec); ttModel.g.position.y = 0.1; ttGroup.add(ttModel.g);
+}
+function updateBuyBtn() { btnBuy.innerHTML = shopEditing ? '<span class="em">💾</span>Guardar cambios' : '<span class="em">🔑</span>¡Lo quiero!'; }
+function renderShopTabs() { shopTabsEl.innerHTML = SHOP_TABS.map(t => `<button class="tab${t.id === shopTab ? ' on' : ''}" data-tab="${t.id}">${t.label}</button>`).join(''); }
+function renderShop() {
+  const s = shopSpec, T = CAR_TYPE[s.type];
+  let h = shopEditing && shopTab !== 'garaje' ? `<p class="note editing">Estás cambiando tu <b>${esc(T.name.toLowerCase())}</b>. Toca <b>Guardar cambios</b> cuando termines.</p>` : '';
+  if (shopTab === 'modelo') {
+    h += '<h3>Tipo de auto</h3>' + optsHTML(CAR_TYPES.map(t => ({ id: t.id, name: t.name, ic: carIcon(t.id, s.color, s.accent) })), s.type, 'type') +
+      `<p class="note"><b>${T.name}:</b> ${T.desc}<br>Rapidez ${stars(T.vel)} &nbsp; Giro ${stars(T.giro)}</p>`;
+  } else if (shopTab === 'pintura') {
+    h += '<h3>Color del auto</h3>' + swHTML(CAR_COLORS, s.color, 'color') + '<h3>Color de detalles</h3>' + swHTML(CAR_COLORS, s.accent, 'accent') +
+      '<p class="note">Los detalles son los asientos, los dibujos y los adornos.</p>';
+  } else if (shopTab === 'diseno') {
+    h += '<h3>Dibujo a los lados</h3>' + optsHTML(DECALS, s.deco, 'deco');
+    if (s.deco === 'numero') h += '<h3>Número</h3><div class="opts nums">' + Array.from({ length: 12 }, (_, i) => i + 1).map(n => `<button class="opt${n === s.num ? ' on' : ''}" data-k="num" data-v="${n}">${n}</button>`).join('') + '</div>';
+  } else if (shopTab === 'ruedas') {
+    h += '<h3>Llantas</h3>' + optsHTML(RIMS, s.rims, 'rims');
+  } else if (shopTab === 'adornos') {
+    h += '<h3>En el techo</h3>' + optsHTML(TOPPERS, s.topper, 'topper') + '<h3>Extras</h3><div class="opts">' +
+      EXTRAS.map(x => `<button class="opt${s.extras.includes(x.id) ? ' on' : ''}" data-k="extra" data-v="${x.id}"><span class="ic">${x.ic}</span><span>${x.name}</span></button>`).join('') +
+      '</div><p class="note">Puedes elegir varios extras a la vez.</p>';
+  } else if (shopTab === 'bocina') {
+    h += '<h3>Sonido de la bocina</h3>' + optsHTML(HORNS, s.horn, 'horn') + '<p class="note">Toca una para escucharla.</p>';
+  } else {
+    const list = ownedCars.length
+      ? '<div class="mypets garage">' + ownedCars.map((c, i) => `<div class="mypet${c === shopEditing ? ' on' : ''}"><span class="cdot" style="background:${c.spec.color}"></span><b>${esc(CAR_TYPE[c.spec.type].name)}</b><button class="toy" data-g="edit" data-i="${i}">Cambiar</button><button class="toy" data-g="rm" data-i="${i}">Devolver</button></div>`).join('') + '</div>'
+      : '<p class="empty">Todavía no tienes autos. Diseña uno y toca "¡Lo quiero!".</p>';
+    h += (shopEditing ? '<button class="toy mint wide" data-g="new"><span class="em">➕</span>Diseñar un auto nuevo</button>' : '') +
+      `<h3>Mis autos (${ownedCars.length}/${MAX_CARS})</h3>` + list +
+      '<p class="note">Con el botón 🚗 Mi auto puedes llamar a tu auto desde cualquier parte de la ciudad.</p>';
+  }
+  shopBody.innerHTML = h;
+}
+shopTabsEl.addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (!b) return; shopTab = b.dataset.tab; renderShopTabs(); renderShop(); shopBody.scrollTop = 0; sfx('pop'); });
+shopBody.addEventListener('click', e => {
+  const g = e.target.closest('[data-g]');
+  if (g) {
+    const act = g.dataset.g, c = ownedCars[+g.dataset.i];
+    if (act === 'new') { shopEditing = null; shopSpec = fixCarSpec(DEFAULT_CAR); shopTab = 'modelo'; }
+    else if (act === 'edit' && c) { shopEditing = c; shopSpec = clone(c.spec); shopTab = 'modelo'; ttSpin = 0.5; }
+    else if (act === 'rm' && c) {
+      removeCar(c); ownedCars.splice(ownedCars.indexOf(c), 1);
+      if (shopEditing === c) shopEditing = null;
+      if (lastCar === c) lastCar = null;
+      toast('Tu auto volvió a la tienda'); save();
+    }
+    sfx('pop'); refreshTT(); updateBuyBtn(); renderShopTabs(); renderShop(); return;
+  }
+  const b = e.target.closest('[data-k]'); if (!b) return;
+  const k = b.dataset.k, v = b.dataset.v, s = shopSpec;
+  if (k === 'extra') { const i = s.extras.indexOf(v); if (i >= 0) s.extras.splice(i, 1); else s.extras.push(v); }
+  else if (k === 'num') s.num = +v;
+  else s[k] = v;
+  if (k === 'horn') { initAudio(); hornSound(v); renderShop(); return; }
+  sfx('pop'); refreshTT(); renderShop();
+});
+$('#btnCarRandom').addEventListener('click', () => { shopSpec = randomCarSpec(); ttSpin = 0.5; sfx('pop'); refreshTT(); renderShop(); });
+btnBuy.addEventListener('click', () => {
+  if (shopEditing) {
+    setCarModel(shopEditing, buildCarModel(clone(shopSpec))); syncCar(shopEditing);
+    save(); sfx('adopt'); toast('¡Tu auto quedó como nuevo!'); return;
+  }
+  if (ownedCars.length >= MAX_CARS) {
+    toast('Ya tienes 4 autos. Devuelve uno en "Mi garaje" para llevarte otro.');
+    shopTab = 'garaje'; renderShopTabs(); renderShop(); return;
+  }
+  const spec = clone(shopSpec), M = buildCarModel(spec);
+  const spot = SPAWNS.find(([x, z, h]) => carFitsAt(M.hw, M.hl, x, z, h));
+  if (!spot) { M.dispose(); toast('La calle está llena de autos. Intenta en un ratito.'); return; }
+  const c = spawnCar(spec, spot[0], spot[1], spot[2], true, M);
+  ownedCars.push(c); lastCar = c;
+  closeShop();
+  enterCar(c);
+  save(); sfx('adopt');
+  toast('¡Tu auto nuevo! Maneja con el círculo 🚗');
+});
+function openShop() {
+  if (mode !== 'play') return;
+  player.pos.set(TT.x - 5.3, 0, TT.z + 1.6); collide(player.pos, 0.5);
+  player.facing = Math.atan2(TT.x - player.pos.x, TT.z - player.pos.z);
+  enterMenu('shop'); shopPanel.hidden = false;
+  shopEditing = null; shopTab = 'modelo'; ttSpin = 0.5; ttDrag = 0;
+  refreshTT(); updateBuyBtn(); renderShopTabs(); renderShop(); shopBody.scrollTop = 0;
+}
+function closeShop() {
+  if (shopEditing) { shopEditing = null; shopSpec = fixCarSpec(DEFAULT_CAR); refreshTT(); }
+  shopPanel.hidden = true; leaveMenu(); save();
+}
+$('#shopDone').addEventListener('click', closeShop);
+
 /* ================= LOOP & BOOT ================= */
 let last = performance.now(), placeT = 0;
 const placeName = $('#placeName');
@@ -2308,7 +3117,8 @@ function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min(0.05, (now - last) / 1000); last = now; clock += dt;
   updatePlayer(dt);
-  followChain(player.pets, player.pos, dt, clock, mode === 'drive' ? 3.8 : 1.7);
+  if (mode === 'drive') followChain(player.pets.filter(p => !p.riding), player.pos, dt, clock, driving.hl + 1.3);
+  else followChain(player.pets, player.pos, dt, clock, 1.7);
   updateNPCs(dt, clock);
   updatePreview(dt, clock);
   updateZones();
@@ -2333,6 +3143,21 @@ async function boot() {
   player.ch = makeCharacter(fixOutfit(saved && saved.outfit));
   const pets = saved ? (saved.pets || []) : [{ kind: 'perro', color: '#E9B77A', name: 'Toby' }];
   pets.slice(0, MAX_PETS).forEach(p => { if (PET_KINDS.some(k => k.id === p.kind)) addPet(p.kind, p.color || '#E9B77A', String(p.name || 'Toby').slice(0, 12)); });
+  // your own cars, parked where you left them
+  (saved && Array.isArray(saved.cars) ? saved.cars : []).slice(0, MAX_CARS).forEach(o => {
+    if (!o) return;
+    const spec = fixCarSpec(o.spec), M = buildCarModel(spec);
+    let x = +o.x, z = +o.z, h = +o.h || 0;
+    if (!isFinite(x) || !isFinite(z) || !carFitsAt(M.hw, M.hl, x, z, h)) {
+      const sp = SPAWNS.find(([a, b, c]) => carFitsAt(M.hw, M.hl, a, b, c));
+      if (!sp) { M.dispose(); return; }
+      [x, z, h] = sp;
+    }
+    ownedCars.push(spawnCar(spec, x, z, h, true, M));
+  });
+  lastCar = ownedCars[ownedCars.length - 1] || null;
+  if (saved && saved.shop) shopSpec = fixCarSpec(saved.shop);
+  refreshTT();
   spawnNPCs(7);
   resize();
   cam.look.set(player.pos.x, 1.6, player.pos.z); cam.pos.set(player.pos.x + 8, 7, player.pos.z + 8);
